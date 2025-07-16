@@ -1,0 +1,6 @@
+/* src/index.css */
+@import "tailwindcss";
+
+body {
+  background-color: #0d0d1a; /* This matches the background from your App.jsx */
+}
