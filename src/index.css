@@ -1,6 +1,149 @@
 /* src/index.css */
 @import "tailwindcss";
 
-body {
-  background-color: #0d0d1a; /* This matches the background from your App.jsx */
+/* STEP A: Register your CSS variables with Tailwind's theme engine.
+*/
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius: var(--radius);
+}
+
+/* STEP B: Define the actual color values for your variables.
+*/
+@layer base {
+  :root {
+    --background: hsl(222.2 84% 4.9%);
+    --foreground: hsl(210 40% 98%);
+    --card: hsl(222.2 84% 4.9%);
+    --card-foreground: hsl(210 40% 98%);
+    --popover: hsl(222.2 84% 4.9%);
+    --popover-foreground: hsl(210 40% 98%);
+    --primary: hsl(210 40% 98%);
+    --primary-foreground: hsl(222.2 47.4% 11.2%);
+    --secondary: hsl(217.2 32.6% 17.5%);
+    --secondary-foreground: hsl(210 40% 98%);
+    --muted: hsl(217.2 32.6% 17.5%);
+    --muted-foreground: hsl(215 20.2% 65.1%);
+    --accent: hsl(217.2 32.6% 17.5%);
+    --accent-foreground: hsl(210 40% 98%);
+    --destructive: hsl(0 62.8% 30.6%);
+    --destructive-foreground: hsl(210 40% 98%);
+    --border: hsl(217.2 32.6% 17.5%);
+    --input: hsl(217.2 32.6% 17.5%);
+    --ring: hsl(212.7 26.8% 83.9%);
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: hsl(222.2 84% 4.9%);
+    --foreground: hsl(210 40% 98%);
+    --card: hsl(222.2 84% 4.9%);
+    --card-foreground: hsl(210 40% 98%);
+    --popover: hsl(222.2 84% 4.9%);
+    --popover-foreground: hsl(210 40% 98%);
+    --primary: hsl(210 40% 98%);
+    --primary-foreground: hsl(222.2 47.4% 11.2%);
+    --secondary: hsl(217.2 32.6% 17.5%);
+    --secondary-foreground: hsl(210 40% 98%);
+    --muted: hsl(217.2 32.6% 17.5%);
+    --muted-foreground: hsl(215 20.2% 65.1%);
+    --accent: hsl(217.2 32.6% 17.5%);
+    --accent-foreground: hsl(210 40% 98%);
+    --destructive: hsl(0 62.8% 30.6%);
+    --destructive-foreground: hsl(210 40% 98%);
+    --border: hsl(217.2 32.6% 17.5%);
+    --input: hsl(217.2 32.6% 17.5%);
+    --ring: hsl(212.7 26.8% 83.9%);
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+/* --- HOLOGRAPHIC BUTTON & FONT FIXES --- */
+
+/* We register --gradient-angle as a custom property
+   so the browser can smoothly animate it. */
+@property --gradient-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* A new animation that just rotates the angle. */
+@keyframes holographic-glow {
+  to {
+    --gradient-angle: 360deg;
+  }
+}
+
+/* This creates a new stacking context so the ::after
+   pseudo-element stays behind the button's text content. */
+.holographic-border {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate; /* Critical for layering */
+}
+
+/* This is the gradient glow layer. It sits behind everything. */
+.holographic-border::before {
+  content: '';
+  position: absolute;
+  inset: -10px; /* Make it larger than the button to create a soft glow */
+  
+  /* A more aesthetic, transparent gradient */
+  background: conic-gradient(
+    from var(--gradient-angle),
+    hsl(260, 80%, 75%, 0.5),
+    hsl(180, 85%, 70%, 0.6),
+    hsl(320, 80%, 75%, 0.5),
+    hsl(260, 80%, 75%, 0.5)
+  );
+
+  /* A slower, smoother animation */
+  animation: holographic-glow 6s linear infinite;
+
+  /* Soften the gradient with a blur */
+  filter: blur(10px);
+}
+
+/* This is a mask that sits on top of the glow.
+   It's the same color as your page background, creating the border effect. */
+.holographic-border::after {
+  content: '';
+  position: absolute;
+  inset: 2px; /* This controls the border thickness */
+  background-color: hsl(var(--background));
+  border-radius: 0.375rem; /* Match the button's default border-radius (rounded-md) */
+}
+
+
+/* This rule bypasses the build process issue and ensures the font class is always available. */
+.font-pixel {
+  font-family: "Press Start 2P", monospace;
 }
