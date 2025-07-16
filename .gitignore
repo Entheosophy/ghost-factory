@@ -22,3 +22,21 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment Variables
+# Ignore all local environment files
+.env.local
+.env.*.local
+
+# Ignore all non-production environment files (optional but good practice)
+.env
+.env.development
+.env.test
+
+# Vite
+# Ignore the Vite cache directory
+.vite/
+
+# Testing
+# Ignore test coverage reports
+/coverage

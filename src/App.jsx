@@ -137,7 +137,7 @@ function App() {
       <Tabs defaultValue="composer" className="w-full max-w-7xl mx-auto">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="composer">Static Composer</TabsTrigger>
-          <TabsTrigger value="animator" disabled>Animation Studio</TabsTrigger>
+          <TabsTrigger value="animator" disabled>Animation Studio... soon</TabsTrigger>
         </TabsList>
         <TabsContent value="composer">
           <div className="grid lg:grid-cols-3 gap-8 mt-4">
