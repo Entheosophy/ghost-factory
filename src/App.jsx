@@ -43,44 +43,12 @@ const TraitSelector = ({ layer, trait, currentSelection, onSelect }) => {
 
 function App() {
   const [currentConfig, setCurrentConfig] = useState({});
-  const [status, setStatus] = useState('Loading assets...');
-  const [isLoaded, setIsLoaded] = useState(false);
 
+  // The slow preloader and related 'isLoaded' and 'status' states have been removed.
   useEffect(() => {
-    let active = true;
-    const preloadImages = async () => {
-      const imagePromises = [];
-      LAYER_ORDER.forEach(layer => {
-        const trait = TRAIT_MANIFEST[layer];
-        if (trait) {
-          Object.values(trait.options).forEach(url => {
-            if (url) {
-              imagePromises.push(new Promise((resolve) => {
-                const img = new Image();
-                img.src = url;
-                img.onload = resolve;
-                img.onerror = () => resolve();
-              }));
-            }
-          });
-        }
-      });
-      await Promise.all(imagePromises);
-      if (active) {
-        setStatus('Assets Loaded!');
-        setIsLoaded(true);
-        setTimeout(() => setStatus(''), 2000);
-      }
-    };
-    preloadImages();
-    return () => { active = false; };
+    // Randomize the character on the initial load.
+    handleRandomize();
   }, []);
-
-  useEffect(() => {
-    if (isLoaded) {
-      handleRandomize();
-    }
-  }, [isLoaded]);
 
   const handleSelectTrait = (layer, optionKey) => {
     setCurrentConfig(prevConfig => ({ ...prevConfig, [layer]: optionKey }));
@@ -128,19 +96,19 @@ function App() {
   };
 
   return (
+    // The inline style has been removed and overflow-x-hidden was added.
     <div
-      className="flex flex-col lg:flex-row items-center justify-center min-h-screen p-4 gap-8 text-foreground font-pixel"
-      style={{
-        backgroundImage: 'radial-gradient(circle, #573b7e, #161535)'
-      }}
+      className="flex flex-col lg:flex-row items-center justify-center min-h-screen p-4 gap-8 text-foreground font-pixel overflow-x-hidden"
     >
       <Tabs defaultValue="composer" className="w-full max-w-7xl mx-auto">
-        <TabsList className="grid w-full grid-cols-2">
+        {/* The grid layout is now responsive for mobile. */}
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2">
           <TabsTrigger value="composer">Static Composer</TabsTrigger>
-          <TabsTrigger value="animator" disabled>Animation Studio... soon</TabsTrigger>
+          <TabsTrigger value="animator" disabled>Animation Studio</TabsTrigger>
         </TabsList>
         <TabsContent value="composer">
-          <div className="grid lg:grid-cols-3 gap-8 mt-4">
+          {/* Layout defaults to 1 column, switches to 3 on large screens. */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-4">
             <Card className="lg:col-span-1 bg-card/80">
               <CardHeader>
                 <CardTitle className="text-2xl tracking-widest text-center">GHOST FACTORY</CardTitle>
@@ -159,19 +127,18 @@ function App() {
                   ) : null;
                 })}
                 <div className="pt-4 space-y-3">
+                  {/* The 'disabled' prop has been removed from the buttons. */}
                   <Button
                     onClick={handleRandomize}
-                    disabled={!isLoaded}
                     variant="holographic"
                     className="w-full text-lg"
                   >
                     Randomize
                   </Button>
-                  <Button onClick={handleDownload} disabled={!isLoaded} variant="outline" className="w-full text-lg">
+                  <Button onClick={handleDownload} variant="outline" className="w-full text-lg">
                     Download PNG
                   </Button>
                 </div>
-                {status && <div className="text-center text-sm text-muted-foreground pt-2">{status}</div>}
               </CardContent>
             </Card>
 

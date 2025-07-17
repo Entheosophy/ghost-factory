@@ -82,6 +82,11 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+        /* ADD THESE LINES FOR A FIXED BACKGROUND */
+    background-image: radial-gradient(circle, #573b7e, #161535);
+    background-size: cover;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
   }
 }
 
