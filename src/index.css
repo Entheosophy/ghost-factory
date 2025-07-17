@@ -29,6 +29,9 @@
 /* STEP B: Define the actual color values for your variables.
 */
 @layer base {
+  html {
+    font-size: 90%;
+  }
   :root {
     --background: hsl(222.2 84% 4.9%);
     --foreground: hsl(210 40% 98%);
