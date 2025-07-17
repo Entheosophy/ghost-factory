@@ -1,6 +1,5 @@
-/* // src/lib/traitUtils.js */
+// src/lib/traitUtils.js
 
-// This mapping holds the color for each trait class you defined.
 const TRAIT_COLOR_MAP = {
   zombie: '#ceddba',
   glitch: '#cc01ff',
@@ -10,6 +9,7 @@ const TRAIT_COLOR_MAP = {
   ice: '#60aad1',
   goblin: '#97a55e',
   onesie: '#ff8502',
+  gold: '#ffd800',
 };
 
 const DEFAULT_COLOR = '#FFFFFF';
@@ -22,10 +22,10 @@ const DEFAULT_COLOR = '#FFFFFF';
 export function getTraitColor(traitKey) {
   if (!traitKey) return DEFAULT_COLOR;
   
-  const lowerCaseKey = traitKey.toLowerCase();
+  const keyParts = traitKey.toLowerCase().split('_');
   
   for (const className in TRAIT_COLOR_MAP) {
-    if (lowerCaseKey.includes(className)) {
+    if (keyParts.includes(className)) {
       return TRAIT_COLOR_MAP[className];
     }
   }
