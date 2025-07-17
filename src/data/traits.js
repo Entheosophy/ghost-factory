@@ -381,4 +381,4 @@ export const TRAIT_MANIFEST = {
     }
 };
 
-export const LAYER_ORDER = ['background', 'skin', 'propulsion', 'hand_left', 'hand_right', 'eyes', 'head', 'mouth'];
+export const LAYER_ORDER = ['background', 'skin', 'propulsion', 'hand_left', 'eyes', 'head', 'mouth', 'hand_right',];

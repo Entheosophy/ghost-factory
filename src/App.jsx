@@ -1,60 +1,51 @@
-// src/App.jsx
+/* // src/App.jsx */
 import { useState, useEffect, useMemo } from 'react';
 import { TRAIT_MANIFEST, LAYER_ORDER } from './data/traits';
+import { DndContext, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
+import { arrayMove, SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
+import GIF from 'gif.js';
 
-// Import shadcn/ui components
+// Import Components
+import { AnimationPreview } from '@/components/AnimationPreview';
+import { FrameTimeline } from '@/components/FrameTimeline';
+import { TraitSelector } from '@/components/TraitSelector'; // Import the new component
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-// Helper function to create a clean display name from a trait key
-function formatTraitName(name) {
-  return name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-}
-
-const TraitSelector = ({ layer, trait, currentSelection, onSelect }) => {
-  const sortedOptions = useMemo(() => {
-    const keys = Object.keys(trait.options);
-    const noneKey = keys.find(k => k.toLowerCase() === 'none');
-    const otherKeys = keys.filter(k => k.toLowerCase() !== 'none').sort();
-    return noneKey ? [noneKey, ...otherKeys] : otherKeys;
-  }, [trait.options]);
-
-  return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-muted-foreground">{trait.label}</label>
-      <Select onValueChange={(value) => onSelect(layer, value)} value={currentSelection}>
-        <SelectTrigger>
-          <SelectValue placeholder={`Select ${trait.label}...`} />
-        </SelectTrigger>
-        <SelectContent className="border bg-popover font-pixel">
-          {sortedOptions.map(optionKey => (
-            <SelectItem key={optionKey} value={optionKey}>
-              {formatTraitName(optionKey)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-};
-
+import { Slider } from "@/components/ui/slider"
+import { Play, Pause } from 'lucide-react';
 
 function App() {
-  const [currentConfig, setCurrentConfig] = useState({});
+  // State for Static Composer
+  const [staticConfig, setStaticConfig] = useState({});
+  
+  // State for Animation Studio
+  const [frames, setFrames] = useState([]);
+  const [activeFrameIndex, setActiveFrameIndex] = useState(0);
+  const [fps, setFps] = useState(10);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  // The slow preloader and related 'isLoaded' and 'status' states have been removed.
+  // Configure a sensor that requires movement before starting a drag
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  );
+
+  // Initialize with a random character
   useEffect(() => {
-    // Randomize the character on the initial load.
-    handleRandomize();
+    handleRandomizeStatic();
   }, []);
 
-  const handleSelectTrait = (layer, optionKey) => {
-    setCurrentConfig(prevConfig => ({ ...prevConfig, [layer]: optionKey }));
+  // --- Static Composer Logic ---
+  const handleSelectStaticTrait = (layer, optionKey) => {
+    setStaticConfig(prevConfig => ({ ...prevConfig, [layer]: optionKey }));
   };
 
-  const handleRandomize = () => {
+  const handleRandomizeStatic = () => {
     const newConfig = {};
     LAYER_ORDER.forEach(layer => {
       const trait = TRAIT_MANIFEST[layer];
@@ -63,7 +54,7 @@ function App() {
         newConfig[layer] = options[Math.floor(Math.random() * options.length)];
       }
     });
-    setCurrentConfig(newConfig);
+    setStaticConfig(newConfig);
   };
 
   const handleDownload = () => {
@@ -73,7 +64,7 @@ function App() {
     canvas.width = CANVAS_SIZE;
     canvas.height = CANVAS_SIZE;
     const imagesToDraw = LAYER_ORDER.map(layer => {
-      const url = TRAIT_MANIFEST[layer]?.options[currentConfig[layer]];
+      const url = TRAIT_MANIFEST[layer]?.options[staticConfig[layer]];
       if (url) {
         return new Promise((resolve) => {
           const img = new Image();
@@ -95,76 +86,200 @@ function App() {
     });
   };
 
+  // --- Animation Studio Logic ---
+  const handleUpdateFrame = (layer, optionKey) => {
+    if (frames.length === 0) return;
+    const newFrames = [...frames];
+    newFrames[activeFrameIndex].config = { ...newFrames[activeFrameIndex].config, [layer]: optionKey };
+    setFrames(newFrames);
+  };
+
+  const handleAddFrame = () => {
+    const newConfig = frames.length > 0 ? { ...frames[activeFrameIndex].config } : staticConfig;
+    const newFrame = { id: self.crypto.randomUUID(), config: newConfig };
+    const newFrames = [...frames, newFrame];
+    setFrames(newFrames);
+    setActiveFrameIndex(newFrames.length - 1);
+  };
+
+  const handleDuplicateFrame = (index) => {
+    const frameToDuplicate = { ...frames[index], id: self.crypto.randomUUID() };
+    const newFrames = [...frames.slice(0, index + 1), frameToDuplicate, ...frames.slice(index + 1)];
+    setFrames(newFrames);
+    setActiveFrameIndex(index + 1);
+  };
+
+  const handleDeleteFrame = (index) => {
+    const newFrames = frames.filter((_, i) => i !== index);
+    setFrames(newFrames);
+    setActiveFrameIndex(prevIndex => Math.max(0, Math.min(prevIndex, newFrames.length - 1)));
+  };
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      setFrames((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        const newArray = arrayMove(items, oldIndex, newIndex);
+        setActiveFrameIndex(newIndex);
+        return newArray;
+      });
+    }
+  };
+
+  const handleGenerateGif = async () => {
+    if (frames.length === 0) return;
+    setIsGenerating(true);
+
+    const gif = new GIF({
+      workers: 2,
+      quality: 10,
+      workerScript: '/gif.worker.js'
+    });
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const CANVAS_SIZE = 512;
+    canvas.width = CANVAS_SIZE;
+    canvas.height = CANVAS_SIZE;
+
+    for (const frame of frames) {
+      const imagesToDraw = LAYER_ORDER.map(layer => {
+        const url = TRAIT_MANIFEST[layer]?.options[frame.config[layer]];
+        if (url) {
+          return new Promise(resolve => {
+            const img = new Image();
+            img.src = url;
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null);
+          });
+        }
+        return Promise.resolve(null);
+      });
+
+      const loadedImages = await Promise.all(imagesToDraw);
+      ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+      loadedImages.forEach(img => {
+        if (img) ctx.drawImage(img, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
+      });
+      gif.addFrame(canvas, { copy: true, delay: 1000 / fps });
+    }
+
+    gif.on('finished', (blob) => {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'ghost-animation.gif';
+      link.click();
+      setIsGenerating(false);
+    });
+
+    gif.render();
+  };
+  
+  const activeFrameConfig = frames[activeFrameIndex]?.config || {};
+
   return (
-    // The inline style has been removed and overflow-x-hidden was added.
-    <div
-      className="flex flex-col lg:flex-row items-center justify-center min-h-screen p-4 gap-8 text-foreground font-pixel overflow-x-hidden"
-    >
+    <div className="flex flex-col lg:flex-row items-center justify-center min-h-screen p-4 gap-8 text-foreground font-pixel overflow-x-hidden">
       <Tabs defaultValue="composer" className="w-full max-w-7xl mx-auto">
-        {/* The grid layout is now responsive for mobile. */}
         <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2">
           <TabsTrigger value="composer">Static Composer</TabsTrigger>
-          <TabsTrigger value="animator" disabled>Animation Studio</TabsTrigger>
+          <TabsTrigger value="animator">Animation Studio</TabsTrigger>
         </TabsList>
+        
+        {/* --- Static Composer Tab --- */}
         <TabsContent value="composer">
-          {/* Layout defaults to 1 column, switches to 3 on large screens. */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-4">
             <Card className="lg:col-span-1 bg-card/80">
               <CardHeader>
                 <CardTitle className="text-2xl tracking-widest text-center">GHOST FACTORY</CardTitle>
+                <CardDescription className="text-center">Static Composer</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {LAYER_ORDER.map(layerKey => {
-                  const trait = TRAIT_MANIFEST[layerKey];
-                  return trait ? (
-                    <TraitSelector
-                      key={layerKey}
-                      layer={layerKey}
-                      trait={trait}
-                      currentSelection={currentConfig[layerKey] || ''}
-                      onSelect={handleSelectTrait}
-                    />
-                  ) : null;
-                })}
+                {LAYER_ORDER.map(layerKey => (
+                  <TraitSelector
+                    key={layerKey}
+                    layer={layerKey}
+                    trait={TRAIT_MANIFEST[layerKey]}
+                    currentSelection={staticConfig[layerKey] || ''}
+                    onSelect={handleSelectStaticTrait}
+                  />
+                ))}
                 <div className="pt-4 space-y-3">
-                  {/* The 'disabled' prop has been removed from the buttons. */}
-                  <Button
-                    onClick={handleRandomize}
-                    variant="holographic"
-                    className="w-full text-lg"
-                  >
-                    Randomize
-                  </Button>
-                  <Button onClick={handleDownload} variant="outline" className="w-full text-lg">
-                    Download PNG
-                  </Button>
+                  <Button onClick={handleRandomizeStatic} variant="holographic" className="w-full text-lg">Randomize</Button>
+                  <Button onClick={handleDownload} variant="outline" className="w-full text-lg">Download PNG</Button>
                 </div>
               </CardContent>
             </Card>
-
             <div className="lg:col-span-2 w-full aspect-square p-2 rounded-lg border bg-black/20">
               <div className="relative w-full h-full">
                 {LAYER_ORDER.map(layerKey => {
-                  const optionKey = currentConfig[layerKey];
+                  const optionKey = staticConfig[layerKey];
                   if (!optionKey) return null;
                   const url = TRAIT_MANIFEST[layerKey]?.options[optionKey];
                   return url ? (
-                    <img
-                      key={layerKey}
-                      src={url}
-                      alt={`${layerKey} - ${optionKey}`}
-                      className="absolute top-0 left-0 w-full h-full"
-                    />
+                    <img key={layerKey} src={url} alt={`${layerKey} - ${optionKey}`} className="absolute top-0 left-0 w-full h-full" />
                   ) : null;
                 })}
               </div>
             </div>
           </div>
         </TabsContent>
+
+        {/* --- Animation Studio Tab --- */}
         <TabsContent value="animator">
-            <div className="flex items-center justify-center h-96">
-                <p className="text-muted-foreground">Animation Studio coming soon...</p>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-4">
+              <Card className="lg:col-span-1 bg-card/80">
+                <CardHeader>
+                  <CardTitle className="text-2xl tracking-widest text-center">GHOST FACTORY</CardTitle>
+                  <CardDescription className="text-center">Animation Studio</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {LAYER_ORDER.map(layerKey => (
+                    <TraitSelector
+                      key={layerKey}
+                      layer={layerKey}
+                      trait={TRAIT_MANIFEST[layerKey]}
+                      currentSelection={activeFrameConfig[layerKey] || ''}
+                      onSelect={handleUpdateFrame}
+                    />
+                  ))}
+                  <div className="pt-4 space-y-3">
+                    <Button onClick={handleAddFrame} variant="outline" className="w-full">Add New Frame</Button>
+                    <Button onClick={handleGenerateGif} variant="outline" className="w-full" disabled={isGenerating}>
+                      {isGenerating ? 'Generating...' : 'Generate GIF'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="lg:col-span-2 flex flex-col gap-4">
+                <AnimationPreview 
+                  frames={frames.map(f => f.config)} 
+                  fps={fps} 
+                  isPlaying={isPlaying}
+                  activeFrameIndex={activeFrameIndex}
+                />
+                <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 p-4 border rounded-lg bg-black/20">
+                  <Button variant="outline" size="icon" onClick={() => setIsPlaying(!isPlaying)}>
+                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                  </Button>
+                  <Slider defaultValue={[10]} min={1} max={30} step={1} onValueChange={(value) => setFps(value[0])} />
+                  <span className="text-sm font-medium w-16 text-center">{fps} FPS</span>
+                </div>
+                <SortableContext items={frames} strategy={horizontalListSortingStrategy}>
+                  <FrameTimeline 
+                    frames={frames} 
+                    activeFrameIndex={activeFrameIndex} 
+                    onSelect={setActiveFrameIndex} 
+                    onDuplicate={handleDuplicateFrame} 
+                    onDelete={handleDeleteFrame} 
+                  />
+                </SortableContext>
+              </div>
             </div>
+          </DndContext>
         </TabsContent>
       </Tabs>
     </div>
