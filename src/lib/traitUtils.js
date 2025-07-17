@@ -10,6 +10,7 @@ const TRAIT_COLOR_MAP = {
   goblin: '#97a55e',
   onesie: '#ff8502',
   gold: '#ffd800',
+  glow: '#38e9b7',
 };
 
 const DEFAULT_COLOR = '#FFFFFF';
