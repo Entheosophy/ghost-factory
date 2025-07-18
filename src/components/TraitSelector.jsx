@@ -7,7 +7,7 @@ const WORD_COLOR_MAP = {
   brown: '#964B00',
   green: '#9effcb',
   grey: '#a1a1aa',
-  yellow: '#eab308',
+  yellow: '#ffec57',
   blue: '#aad5ff',
   red: '#ef4444',
   purple: '#d4b1ff',
@@ -17,6 +17,27 @@ const WORD_COLOR_MAP = {
   midnight: '#38295b',
   sky: '#24c6fe',
   zombie: '#ceddba',
+  white: '#ffffff',
+    // Onesie animal colors
+  duck: '#ffec57', // yellow
+  froggie: '#88cc59',  // GREEN
+  turtle: '#88cc59',// GREEN
+  dino: '#88cc59',  // GREEN
+  wolf: '#a1a1aa',  // grey
+  seal: '#a1a1aa',  // grey
+  goat: '#a1a1aa',  // grey
+  koala: '#a1a1aa', // grey
+  bear: '#90664d',  // brown
+  bull: '#956a3c',  // brown
+  dog: '#b89570',  // light brown
+  cat: '#f0f0f0',   // light grey
+  chicken: '#ffffff',// white
+  panda: '#ffffff', // white
+  gorilla: '#5b5b5b', //dark grey
+  penguin: '#5b5b5b', //dark grey
+  monkey: '#c06d44', // light brown
+  pig: '#ffbcb1', // pink
+  shark: '#9ac9f2', // blue
   vaporwave: 'bg-gradient-to-r from-midnight-500 via-pink-500 to-blue-500 bg-clip-text text-transparent',
   vice: 'bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 bg-clip-text text-transparent',
   rainbow: 'bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 bg-clip-text text-transparent',
@@ -32,11 +53,15 @@ function formatTraitName(name, layer) {
     const lowerWord = word.toLowerCase();
 
     if (lowerWord === 'eyewear') return false;
+    if (lowerWord === 'left') return false;
+    if (lowerWord === 'right') return false;
     
     if (lowerWord === 'white') {
       const whitelistedKeys = [
         'onesie_jetpack_left_white',
-        'onesie_muscles_left_white'
+        'onesie_muscles_left_white',
+        'onesie_muscles_right_white',
+        'onesie_blade_knife_white'
       ];
       if (layer === 'background' || layer === 'skin' || whitelistedKeys.includes(lowerCaseName)) {
         return true;
