@@ -8,7 +8,7 @@ import GIF from 'gif.js';
 // Import Components
 import { AnimationPreview } from '@/components/AnimationPreview';
 import { FrameTimeline } from '@/components/FrameTimeline';
-import { TraitSelector } from '@/components/TraitSelector'; // Import the new component
+import { TraitSelector } from '@/components/TraitSelector'; 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
