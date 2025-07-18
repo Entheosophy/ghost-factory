@@ -30,7 +30,7 @@
 */
 @layer base {
   html {
-    font-size: 90%;
+    font-size: 82%;
   }
   :root {
     --background: hsl(222.2 84% 4.9%);
