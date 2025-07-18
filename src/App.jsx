@@ -12,12 +12,18 @@ import { TraitSelector } from '@/components/TraitSelector';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Slider } from "@/components/ui/slider"
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch"; // Import the new Switch component
+import { Label } from "@/components/ui/label";   // Import Label for the Switch
 import { Play, Pause } from 'lucide-react';
+
+// A defined list of major themes for the cohesive randomizer
+const COHESIVE_THEMES = ['zombie', 'onesie', 'goblin', 'glitch', 'gold', 'robot', 'ice', 'white'];
 
 function App() {
   // State for Static Composer
   const [staticConfig, setStaticConfig] = useState({});
+  const [randomizeMode, setRandomizeMode] = useState('full'); // 'full' or 'cohesive'
   
   // State for Animation Studio
   const [frames, setFrames] = useState([]);
@@ -26,14 +32,8 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Configure a sensor that requires movement before starting a drag
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    })
-  );
+  // dnd-kit sensor configuration
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   // Initialize with a random character
   useEffect(() => {
@@ -55,6 +55,38 @@ function App() {
       }
     });
     setStaticConfig(newConfig);
+  };
+
+  // New function for cohesive randomization
+  const handleCohesiveRandomize = () => {
+    const theme = COHESIVE_THEMES[Math.floor(Math.random() * COHESIVE_THEMES.length)];
+    const newConfig = {};
+    
+    LAYER_ORDER.forEach(layerKey => {
+      const trait = TRAIT_MANIFEST[layerKey];
+      if (trait) {
+        const allOptions = Object.keys(trait.options);
+        const matchingOptions = allOptions.filter(key => key.includes(theme));
+
+        if (matchingOptions.length > 0) {
+          // If a matching trait is found, pick one randomly from the matches
+          newConfig[layerKey] = matchingOptions[Math.floor(Math.random() * matchingOptions.length)];
+        } else {
+          // Fallback: if no matching trait exists for this layer, pick a fully random one
+          newConfig[layerKey] = allOptions[Math.floor(Math.random() * allOptions.length)];
+        }
+      }
+    });
+    setStaticConfig(newConfig);
+  };
+
+  // Main randomize button handler that checks the toggle state
+  const handleRandomizeClick = () => {
+    if (randomizeMode === 'cohesive') {
+      handleCohesiveRandomize();
+    } else {
+      handleRandomizeStatic();
+    }
   };
 
   const handleDownload = () => {
@@ -196,7 +228,6 @@ function App() {
                 <CardDescription className="text-center">Static Composer</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* THE FIX: The menu is now rendered using UI_ORDER */}
                 {UI_ORDER.map(layerKey => (
                   <TraitSelector
                     key={layerKey}
@@ -207,14 +238,23 @@ function App() {
                   />
                 ))}
                 <div className="pt-4 space-y-3">
-                  <Button onClick={handleRandomizeStatic} variant="holographic" className="w-full text-lg">Randomize</Button>
+                  {/* THE FIX: Added the Switch component and its Label */}
+                  <div className="flex items-center justify-center space-x-2 pb-2">
+                    <Label htmlFor="randomize-mode">Fully Random</Label>
+                    <Switch 
+                      id="randomize-mode" 
+                      onCheckedChange={(checked) => setRandomizeMode(checked ? 'cohesive' : 'full')} 
+                    />
+                    <Label htmlFor="randomize-mode">Semi-Cohesive</Label>
+                  </div>
+                  {/* THE FIX: The Randomize button now calls the new handler */}
+                  <Button onClick={handleRandomizeClick} variant="holographic" className="w-full text-lg">Randomize</Button>
                   <Button onClick={handleDownload} variant="outline" className="w-full text-lg">Download PNG</Button>
                 </div>
               </CardContent>
             </Card>
             <div className="lg:col-span-2 w-full aspect-square p-2 rounded-lg border bg-black/20">
               <div className="relative w-full h-full">
-                {/* Image preview still uses LAYER_ORDER */}
                 {LAYER_ORDER.map(layerKey => {
                   const optionKey = staticConfig[layerKey];
                   if (!optionKey) return null;
