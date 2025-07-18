@@ -1,6 +1,6 @@
 /* // src/App.jsx */
 import { useState, useEffect, useMemo } from 'react';
-import { TRAIT_MANIFEST, LAYER_ORDER } from './data/traits';
+import { TRAIT_MANIFEST, LAYER_ORDER, UI_ORDER } from './data/traits';
 import { DndContext, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import GIF from 'gif.js';
@@ -196,7 +196,8 @@ function App() {
                 <CardDescription className="text-center">Static Composer</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {LAYER_ORDER.map(layerKey => (
+                {/* THE FIX: The menu is now rendered using UI_ORDER */}
+                {UI_ORDER.map(layerKey => (
                   <TraitSelector
                     key={layerKey}
                     layer={layerKey}
@@ -213,6 +214,7 @@ function App() {
             </Card>
             <div className="lg:col-span-2 w-full aspect-square p-2 rounded-lg border bg-black/20">
               <div className="relative w-full h-full">
+                {/* Image preview still uses LAYER_ORDER */}
                 {LAYER_ORDER.map(layerKey => {
                   const optionKey = staticConfig[layerKey];
                   if (!optionKey) return null;
@@ -236,7 +238,8 @@ function App() {
                   <CardDescription className="text-center">Animation Studio</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {LAYER_ORDER.map(layerKey => (
+                  {/* THE FIX: This menu is also rendered using UI_ORDER */}
+                  {UI_ORDER.map(layerKey => (
                     <TraitSelector
                       key={layerKey}
                       layer={layerKey}

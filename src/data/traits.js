@@ -438,4 +438,8 @@ export const TRAIT_MANIFEST = {
     }
 };
 
-export const LAYER_ORDER = ['background', 'skin', 'propulsion', 'hand_left', 'eyes', 'head', 'mouth', 'hand_right',];
+// This original order is still used for generating the images correctly.
+export const LAYER_ORDER = ['background', 'skin', 'propulsion', 'hand_left', 'eyes', 'head', 'mouth', 'hand_right'];
+
+// THE FIX: This new array defines the order for the UI menu only.
+export const UI_ORDER = ['background', 'skin', 'propulsion', 'eyes', 'head', 'mouth', 'hand_left', 'hand_right'];
