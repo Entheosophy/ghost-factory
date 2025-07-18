@@ -57,11 +57,12 @@ function App() {
     setStaticConfig(newConfig);
   };
 
-  // New function for cohesive randomization
+  // Function for cohesive randomization
   const handleCohesiveRandomize = () => {
     const theme = COHESIVE_THEMES[Math.floor(Math.random() * COHESIVE_THEMES.length)];
     const newConfig = {};
     
+    // --- Pass 1: General themed randomization ---
     LAYER_ORDER.forEach(layerKey => {
       const trait = TRAIT_MANIFEST[layerKey];
       if (trait) {
@@ -69,18 +70,46 @@ function App() {
         const matchingOptions = allOptions.filter(key => key.includes(theme));
 
         if (matchingOptions.length > 0) {
-          // If a matching trait is found, pick one randomly from the matches
           newConfig[layerKey] = matchingOptions[Math.floor(Math.random() * matchingOptions.length)];
         } else {
-          // Fallback: if no matching trait exists for this layer, pick a fully random one
           newConfig[layerKey] = allOptions[Math.floor(Math.random() * allOptions.length)];
         }
       }
     });
+
+    // --- Pass 2: Enforce specific dependency rules ---
+    
+    // Rule: If propulsion is a jetpack, hands should be jetpack hands if they exist.
+    const propulsionTrait = newConfig.propulsion || '';
+    if (propulsionTrait.includes('jetpack')) {
+      const leftHandOptions = Object.keys(TRAIT_MANIFEST.hand_left.options);
+      const matchingLeftHands = leftHandOptions.filter(key => key.includes('jetpack_left'));
+      if (matchingLeftHands.length > 0) {
+        newConfig.hand_left = matchingLeftHands[Math.floor(Math.random() * matchingLeftHands.length)];
+      }
+    }
+
+    // THE FIX: Stricter matching for symmetrical muscle traits.
+    const leftHandTrait = newConfig.hand_left || '';
+    const rightHandTrait = newConfig.hand_right || '';
+
+    if (leftHandTrait.includes('muscles') && !rightHandTrait.includes('muscles')) {
+      // If left hand has muscles, find the exact right hand counterpart.
+      const targetRightKey = leftHandTrait.replace('left', 'right');
+      if (TRAIT_MANIFEST.hand_right.options[targetRightKey]) {
+        newConfig.hand_right = targetRightKey;
+      }
+    } else if (rightHandTrait.includes('muscles') && !leftHandTrait.includes('muscles')) {
+      // If right hand has muscles, find the exact left hand counterpart.
+      const targetLeftKey = rightHandTrait.replace('right', 'left');
+      if (TRAIT_MANIFEST.hand_left.options[targetLeftKey]) {
+        newConfig.hand_left = targetLeftKey;
+      }
+    }
+
     setStaticConfig(newConfig);
   };
 
-  // Main randomize button handler that checks the toggle state
   const handleRandomizeClick = () => {
     if (randomizeMode === 'cohesive') {
       handleCohesiveRandomize();
@@ -88,6 +117,7 @@ function App() {
       handleRandomizeStatic();
     }
   };
+
 
   const handleDownload = () => {
     const canvas = document.createElement('canvas');
