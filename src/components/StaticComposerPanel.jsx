@@ -55,7 +55,7 @@ export function StaticComposerPanel({
                 checked={randomizeMode === 'cohesive'}
                 onCheckedChange={(checked) => onModeChange(checked ? 'cohesive' : 'full')} 
               />
-              <Label htmlFor="randomize-mode">Cohesive Sets</Label>
+              <Label htmlFor="randomize-mode">Semi-Cohesive</Label>
             </div>
             <Button onClick={onRandomize} variant="holographic" className="w-full text-lg">Randomize</Button>
             <Button onClick={onDownload} variant="outline" className="w-full text-lg">Download PNG</Button>
