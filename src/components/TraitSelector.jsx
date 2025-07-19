@@ -1,7 +1,7 @@
 /* // src/components/TraitSelector.jsx */
 import React, { useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getTraitColor } from '@/lib/traitUtils';
+import { getTraitColor, TRAIT_COLOR_MAP } from '@/lib/traitUtils';
 
 const WORD_COLOR_MAP = {
   brown: '#964B00',
@@ -26,6 +26,7 @@ const WORD_COLOR_MAP = {
   wolf: '#a1a1aa',  // grey
   seal: '#a1a1aa',  // grey
   goat: '#a1a1aa',  // grey
+  "goat grey": '#dfdfdf',
   koala: '#a1a1aa', // grey
   bear: '#90664d',  // brown
   bull: '#956a3c',  // brown
@@ -61,6 +62,8 @@ function formatTraitName(name, layer) {
         'onesie_jetpack_left_white',
         'onesie_muscles_left_white',
         'onesie_muscles_right_white',
+        'muscles_right_white',
+        'muscles_left_white',
         'onesie_blade_knife_white'
       ];
       if (layer === 'background' || layer === 'skin' || whitelistedKeys.includes(lowerCaseName)) {
@@ -80,27 +83,51 @@ function formatTraitName(name, layer) {
 
 function ColorizedTraitName({ name, defaultColor }) {
   const words = name.split(' ');
+  const elements = [];
+  const themeWords = Object.keys(TRAIT_COLOR_MAP);
+  let i = 0;
 
-  return (
-    <div className="flex flex-wrap items-center">
-      {words.map((word, index) => {
-        const lowerWord = word.toLowerCase();
-        const specialStyle = WORD_COLOR_MAP[lowerWord];
-        const formattedWord = word.charAt(0).toUpperCase() + word.slice(1);
+  while (i < words.length) {
+    const oneWordKey = words[i].toLowerCase();
+    let twoWordKey = null;
+    if (i + 1 < words.length) {
+      twoWordKey = `${words[i]} ${words[i+1]}`.toLowerCase();
+    }
+    
+    let styleToApply = null;
+    let consumedWords = 1;
+    let formattedWord = words[i];
 
-        if (specialStyle) {
-          if (specialStyle.startsWith('bg-')) {
-            return <span key={index} className={specialStyle}>&nbsp;{formattedWord}</span>;
-          } else {
-            return <span key={index} style={{ color: specialStyle }}>&nbsp;{formattedWord}</span>;
-          }
-        }
-        
-        return <span key={index} style={{ color: defaultColor }}>&nbsp;{formattedWord}</span>;
-      })}
-    </div>
-  );
+    // Priority 1: Check for specific word colors (multi-word first)
+    if (twoWordKey && WORD_COLOR_MAP[twoWordKey]) {
+      styleToApply = WORD_COLOR_MAP[twoWordKey];
+      consumedWords = 2;
+      formattedWord = `${words[i]} ${words[i+1]}`;
+    } else if (WORD_COLOR_MAP[oneWordKey]) {
+      styleToApply = WORD_COLOR_MAP[oneWordKey];
+    } 
+    // Priority 2: Check if it's a main theme word
+    else if (themeWords.includes(oneWordKey)) {
+      styleToApply = defaultColor;
+    } 
+    // Priority 3: Fallback for "filler" words
+    else {
+      styleToApply = '#FFFFFF';
+    }
+    
+    // Render the span with the determined style
+    if (typeof styleToApply === 'string' && styleToApply.startsWith('bg-')) {
+      elements.push(<span key={i} className={styleToApply}>&nbsp;{formattedWord}</span>);
+    } else {
+      elements.push(<span key={i} style={{ color: styleToApply }}>&nbsp;{formattedWord}</span>);
+    }
+    
+    i += consumedWords;
+  }
+
+  return <div className="flex flex-wrap items-center">{elements}</div>;
 }
+
 
 
 export function TraitSelector({ layer, trait, currentSelection, onSelect }) {

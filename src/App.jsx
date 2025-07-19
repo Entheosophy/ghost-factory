@@ -1,21 +1,16 @@
 /* // src/App.jsx */
-import { useState, useEffect, useMemo } from 'react';
-import { TRAIT_MANIFEST, LAYER_ORDER, UI_ORDER } from './data/traits';
+import { useState, useEffect } from 'react';
+import { TRAIT_MANIFEST, LAYER_ORDER } from './data/traits';
 import { DndContext, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
-import { arrayMove, SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
+import { arrayMove } from '@dnd-kit/sortable';
 import GIF from 'gif.js';
 
-// Import Components
-import { AnimationPreview } from '@/components/AnimationPreview';
-import { FrameTimeline } from '@/components/FrameTimeline';
-import { TraitSelector } from '@/components/TraitSelector'; 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+// Import New Modular Components
+import { StaticComposerPanel } from '@/components/StaticComposerPanel';
+import { AnimationStudioPanel } from '@/components/AnimationStudioPanel';
+
+// Import UI Components
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch"; // Import the new Switch component
-import { Label } from "@/components/ui/label";   // Import Label for the Switch
-import { Play, Pause } from 'lucide-react';
 
 // A defined list of major themes for the cohesive randomizer
 const COHESIVE_THEMES = ['zombie', 'onesie', 'goblin', 'glitch', 'gold', 'robot', 'ice', 'white'];
@@ -24,6 +19,7 @@ function App() {
   // State for Static Composer
   const [staticConfig, setStaticConfig] = useState({});
   const [randomizeMode, setRandomizeMode] = useState('full'); // 'full' or 'cohesive'
+  const [lockedTraits, setLockedTraits] = useState({});
   
   // State for Animation Studio
   const [frames, setFrames] = useState([]);
@@ -37,8 +33,14 @@ function App() {
 
   // Initialize with a random character
   useEffect(() => {
-    handleRandomizeStatic();
+    handleRandomizeClick();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // --- Trait Locking Logic ---
+  const handleToggleLock = (layer) => {
+    setLockedTraits(prev => ({ ...prev, [layer]: !prev[layer] }));
+  };
 
   // --- Static Composer Logic ---
   const handleSelectStaticTrait = (layer, optionKey) => {
@@ -46,121 +48,124 @@ function App() {
   };
 
   const handleRandomizeStatic = () => {
-    const newConfig = {};
+    const newConfig = { ...staticConfig };
     LAYER_ORDER.forEach(layer => {
-      const trait = TRAIT_MANIFEST[layer];
-      if (trait) {
-        const options = Object.keys(trait.options);
-        newConfig[layer] = options[Math.floor(Math.random() * options.length)];
+      if (!lockedTraits[layer]) {
+        const trait = TRAIT_MANIFEST[layer];
+        if (trait) {
+          const options = Object.keys(trait.options);
+          newConfig[layer] = options[Math.floor(Math.random() * options.length)];
+        }
       }
     });
     setStaticConfig(newConfig);
   };
 
-  // Function for cohesive randomization
   const handleCohesiveRandomize = () => {
-    const newConfig = {};
+    const newConfig = { ...staticConfig };
 
-    // 1. Pick a random skin to define the theme for the set.
-    const skinOptions = Object.keys(TRAIT_MANIFEST.skin.options);
-    const selectedSkinKey = skinOptions[Math.floor(Math.random() * skinOptions.length)];
-    newConfig.skin = selectedSkinKey;
-
-    // 2. Extract the core theme from the skin name.
-    const skinParts = selectedSkinKey.split('_');
-    let skinTheme = COHESIVE_THEMES.find(theme => skinParts.includes(theme));
-    if (!skinTheme) {
-      skinTheme = skinParts[0]; 
+    if (!lockedTraits.skin) {
+        const skinOptions = Object.keys(TRAIT_MANIFEST.skin.options);
+        newConfig.skin = skinOptions[Math.floor(Math.random() * skinOptions.length)];
     }
-    
-    // 3. Select traits for other layers based on the skin's theme, with intelligent fallbacks.
-    LAYER_ORDER.forEach(layerKey => {
-      if (layerKey === 'skin') return; 
+    const selectedSkinKey = newConfig.skin || '';
 
-      const trait = TRAIT_MANIFEST[layerKey];
-      if (trait) {
-        const allOptions = Object.keys(trait.options);
-        if (allOptions.length === 0) return;
+    const skinParts = selectedSkinKey.split('_');
+    let skinTheme = COHESIVE_THEMES.find(theme => skinParts.includes(theme)) || skinParts[0];
 
-        let chosenOption = null;
-        const themeOptions = allOptions.filter(key => key.includes(skinTheme));
-        if (themeOptions.length > 0) {
-          chosenOption = themeOptions[Math.floor(Math.random() * themeOptions.length)];
-        }
-
-        if (!chosenOption && layerKey !== 'background') {
-          const whiteOptions = allOptions.filter(key => key.includes('white'));
-          if (whiteOptions.length > 0) {
-            chosenOption = whiteOptions[Math.floor(Math.random() * whiteOptions.length)];
+    ['background', 'propulsion', 'head', 'eyes', 'mouth'].forEach(layerKey => {
+      if (!lockedTraits[layerKey]) {
+        const trait = TRAIT_MANIFEST[layerKey];
+        if (trait) {
+          let allOptions = Object.keys(trait.options);
+          if (skinTheme !== 'onesie') {
+            allOptions = allOptions.filter(key => !key.includes('onesie'));
           }
+          
+          const candidateOptions = allOptions.filter(key => 
+            !COHESIVE_THEMES.some(theme => theme !== skinTheme && theme !== 'white' && theme !== 'gold' && key.includes(theme))
+          );
+
+          let finalSelectionPool = candidateOptions.filter(key => key.includes(skinTheme));
+          if (finalSelectionPool.length === 0) finalSelectionPool = candidateOptions;
+
+          const nonNoneOptions = finalSelectionPool.filter(key => key !== 'none');
+          newConfig[layerKey] = nonNoneOptions.length > 0 
+            ? nonNoneOptions[Math.floor(Math.random() * nonNoneOptions.length)] 
+            : (finalSelectionPool.length > 0 ? finalSelectionPool[0] : 'none');
         }
-        
-        if (!chosenOption) {
-          const nonNoneOptions = allOptions.filter(key => key !== 'none');
-          if (nonNoneOptions.length > 0) {
-            chosenOption = nonNoneOptions[Math.floor(Math.random() * nonNoneOptions.length)];
-          } else {
-            chosenOption = allOptions[0];
-          }
-        }
-        newConfig[layerKey] = chosenOption;
       }
     });
 
-    // 4. Final pass to enforce special rules.
+    const propulsionTrait = newConfig.propulsion || '';
+    const isJetpack = propulsionTrait.includes('jetpack');
+
+    const ONESIE_HAND_SUFFIX_MAP = {
+        duck: 'yellow', fox: 'fox', pig: 'pig', shark: 'shark', bear: 'bear', bull: 'bull', cat: 'cat', 
+        dog: 'dog', wolf: 'wolf', goat: 'goat', koala: 'koala', monkey: 'monkey', froggie: 'green', 
+        turtle: 'green', dino: 'green', seal: 'grey', penguin: 'grey', gorilla: 'grey', chicken: 'white', panda: 'white'
+    };
     
-    // THE FIX: New rule for matching Onesie hands to the skin animal/color
-    if (skinTheme === 'onesie') {
-      const ONESIE_HAND_COLOR_MAP = {
-        duck: 'yellow', fox: 'orange', frog: 'green', turtle: 'green', dino: 'green',
-        wolf: 'grey', seal: 'grey', goat: 'grey', bear: 'brown', bull: 'brown',
-        cat: 'white', chicken: 'white'
-      };
-      const animal = Object.keys(ONESIE_HAND_COLOR_MAP).find(animal => selectedSkinKey.includes(animal));
-      
-      if (animal) {
-        const targetColor = ONESIE_HAND_COLOR_MAP[animal];
-        
-        const leftHandOptions = Object.keys(TRAIT_MANIFEST.hand_left.options);
-        const matchingLeft = leftHandOptions.filter(k => k.startsWith('onesie') && k.endsWith(targetColor));
-        if (matchingLeft.length > 0) {
-          newConfig.hand_left = matchingLeft[Math.floor(Math.random() * matchingLeft.length)];
+    if (isJetpack) {
+        if (!lockedTraits.hand_left) {
+            let targetLeftKey = null;
+            if (skinTheme === 'onesie') {
+                const animal = Object.keys(ONESIE_HAND_SUFFIX_MAP).find(a => selectedSkinKey.includes(a));
+                if (animal) targetLeftKey = `onesie_jetpack_left_${ONESIE_HAND_SUFFIX_MAP[animal]}`;
+            } else {
+                targetLeftKey = `${skinTheme}_jetpack_left`;
+            }
+            if (TRAIT_MANIFEST.hand_left.options[targetLeftKey]) {
+                newConfig.hand_left = targetLeftKey;
+            } else {
+                const fallbackKey = skinTheme === 'onesie' ? 'onesie_jetpack_left_white' : 'white_jetpack_left';
+                newConfig.hand_left = TRAIT_MANIFEST.hand_left.options[fallbackKey] ? fallbackKey : 'none';
+            }
         }
-        
-        const rightHandOptions = Object.keys(TRAIT_MANIFEST.hand_right.options);
-        const matchingRight = rightHandOptions.filter(k => k.startsWith('onesie') && k.endsWith(targetColor));
-        if (matchingRight.length > 0) {
-          newConfig.hand_right = matchingRight[Math.floor(Math.random() * matchingRight.length)];
+        if (!lockedTraits.hand_right) newConfig.hand_right = 'none';
+    } else {
+        if (!lockedTraits.hand_left) {
+          let pool = Object.keys(TRAIT_MANIFEST.hand_left.options).filter(k => !k.includes('jetpack'));
+          if (skinTheme !== 'onesie') pool = pool.filter(k => !k.includes('onesie'));
+          const themeOptions = pool.filter(k => k.includes(skinTheme));
+          if (themeOptions.length > 0) newConfig.hand_left = themeOptions[Math.floor(Math.random() * themeOptions.length)];
         }
-      }
+        if (!lockedTraits.hand_right) {
+          let pool = Object.keys(TRAIT_MANIFEST.hand_right.options);
+          if (skinTheme !== 'onesie') pool = pool.filter(k => !k.includes('onesie'));
+          const themeOptions = pool.filter(k => k.includes(skinTheme));
+          if (themeOptions.length > 0) newConfig.hand_right = themeOptions[Math.floor(Math.random() * themeOptions.length)];
+        }
     }
 
-    const leftHandTrait = newConfig.hand_left || '';
-    const rightHandTrait = newConfig.hand_right || '';
+    if ((newConfig.hand_left || '').includes('muscles') || (newConfig.hand_right || '').includes('muscles')) {
+        if (!lockedTraits.hand_left && !lockedTraits.hand_right) {
+            let suffix = skinTheme;
+            if (skinTheme === 'onesie') {
+                const animal = Object.keys(ONESIE_HAND_SUFFIX_MAP).find(a => selectedSkinKey.includes(a));
+                if (animal) suffix = ONESIE_HAND_SUFFIX_MAP[animal];
+            }
+            const leftKey = `${skinTheme === 'onesie' ? 'onesie_' : ''}muscles_left_${suffix}`;
+            const rightKey = `${skinTheme === 'onesie' ? 'onesie_' : ''}muscles_right_${suffix}`;
+            if (TRAIT_MANIFEST.hand_left.options[leftKey] && TRAIT_MANIFEST.hand_right.options[rightKey]) {
+                newConfig.hand_left = leftKey;
+                newConfig.hand_right = rightKey;
+            }
+        }
+    }
 
-    if (leftHandTrait.includes('muscles') && !rightHandTrait.includes('muscles')) {
-      const targetRightKey = leftHandTrait.replace('left', 'right');
-      if (TRAIT_MANIFEST.hand_right.options[targetRightKey]) {
-        newConfig.hand_right = targetRightKey;
-      }
-    } else if (rightHandTrait.includes('muscles') && !leftHandTrait.includes('muscles')) {
-      const targetLeftKey = rightHandTrait.replace('right', 'left');
-      if (TRAIT_MANIFEST.hand_left.options[targetLeftKey]) {
-        newConfig.hand_left = targetLeftKey;
-      }
+    if (!lockedTraits.mouth && newConfig.mouth === 'none' && newConfig.eyes !== 'mask_skull') {
+        const mouthOptions = Object.keys(TRAIT_MANIFEST.mouth.options).filter(key => key !== 'none');
+        if (mouthOptions.length > 0) newConfig.mouth = mouthOptions[Math.floor(Math.random() * mouthOptions.length)];
     }
     
     setStaticConfig(newConfig);
   };
-
+  
   const handleRandomizeClick = () => {
-    if (randomizeMode === 'cohesive') {
-      handleCohesiveRandomize();
-    } else {
-      handleRandomizeStatic();
-    }
+    if (randomizeMode === 'cohesive') handleCohesiveRandomize();
+    else handleRandomizeStatic();
   };
-
 
   const handleDownload = () => {
     const canvas = document.createElement('canvas');
@@ -237,12 +242,7 @@ function App() {
     if (frames.length === 0) return;
     setIsGenerating(true);
 
-    const gif = new GIF({
-      workers: 2,
-      quality: 10,
-      workerScript: '/gif.worker.js'
-    });
-
+    const gif = new GIF({ workers: 2, quality: 10, workerScript: '/gif.worker.js' });
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const CANVAS_SIZE = 512;
@@ -262,7 +262,6 @@ function App() {
         }
         return Promise.resolve(null);
       });
-
       const loadedImages = await Promise.all(imagesToDraw);
       ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
       loadedImages.forEach(img => {
@@ -284,7 +283,7 @@ function App() {
   
   const activeFrameConfig = frames[activeFrameIndex]?.config || {};
 
-return (
+  return (
     <div className="flex flex-col lg:flex-row items-center justify-center min-h-screen p-4 gap-8 text-foreground font-pixel overflow-x-hidden">
       <Tabs defaultValue="composer" className="w-full max-w-7xl mx-auto flex flex-col gap-4">
         <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 gap-2">
@@ -292,107 +291,44 @@ return (
           <TabsTrigger value="animator">Animation Studio</TabsTrigger>
         </TabsList>
         
-        {/* --- Static Composer Tab --- */}
         <TabsContent value="composer">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <Card className="lg:col-span-1 bg-card/80">
-              <CardHeader>
-                <CardTitle className="text-2xl tracking-widest text-center">GHOST FACTORY</CardTitle>
-                <CardDescription className="text-center">Static Composer</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {UI_ORDER.map(layerKey => (
-                  <TraitSelector
-                    key={layerKey}
-                    layer={layerKey}
-                    trait={TRAIT_MANIFEST[layerKey]}
-                    currentSelection={staticConfig[layerKey] || ''}
-                    onSelect={handleSelectStaticTrait}
-                  />
-                ))}
-                <div className="pt-4 space-y-3">
-                  <div className="flex items-center justify-center space-x-2 pb-2">
-                    <Label htmlFor="randomize-mode">Fully Random</Label>
-                    <Switch 
-                      id="randomize-mode" 
-                      onCheckedChange={(checked) => setRandomizeMode(checked ? 'cohesive' : 'full')} 
-                    />
-                    <Label htmlFor="randomize-mode">Semi-Cohesive</Label>
-                  </div>
-                  <Button onClick={handleRandomizeClick} variant="holographic" className="w-full text-lg">Randomize</Button>
-                  <Button onClick={handleDownload} variant="outline" className="w-full text-lg">Download PNG</Button>
-                </div>
-              </CardContent>
-            </Card>
-            <div className="lg:col-span-2 w-full aspect-square p-2 rounded-lg border bg-black/20">
-              <div className="relative w-full h-full">
-                {LAYER_ORDER.map(layerKey => {
-                  const optionKey = staticConfig[layerKey];
-                  if (!optionKey) return null;
-                  const url = TRAIT_MANIFEST[layerKey]?.options[optionKey];
-                  return url ? (
-                    <img key={layerKey} src={url} alt={`${layerKey} - ${optionKey}`} className="absolute top-0 left-0 w-full h-full" />
-                  ) : null;
-                })}
-              </div>
-            </div>
-          </div>
+          <StaticComposerPanel
+            staticConfig={staticConfig}
+            lockedTraits={lockedTraits}
+            randomizeMode={randomizeMode}
+            onTraitSelect={handleSelectStaticTrait}
+            onToggleLock={handleToggleLock}
+            onRandomize={handleRandomizeClick}
+            onDownload={handleDownload}
+            onModeChange={setRandomizeMode}
+          />
         </TabsContent>
 
-        {/* --- Animation Studio Tab --- */}
         <TabsContent value="animator">
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <Card className="lg:col-span-1 bg-card/80">
-                <CardHeader>
-                  <CardTitle className="text-2xl tracking-widest text-center">GHOST FACTORY</CardTitle>
-                  <CardDescription className="text-center">Animation Studio</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {UI_ORDER.map(layerKey => (
-                    <TraitSelector
-                      key={layerKey}
-                      layer={layerKey}
-                      trait={TRAIT_MANIFEST[layerKey]}
-                      currentSelection={activeFrameConfig[layerKey] || ''}
-                      onSelect={handleUpdateFrame}
-                    />
-                  ))}
-                  <div className="pt-4 space-y-3">
-                    <Button onClick={handleAddFrame} variant="outline" className="w-full">Add New Frame</Button>
-                    <Button onClick={handleGenerateGif} variant="outline" className="w-full" disabled={isGenerating}>
-                      {isGenerating ? 'Generating...' : 'Generate GIF'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="lg:col-span-2 flex flex-col gap-4">
-                <AnimationPreview 
-                  frames={frames.map(f => f.config)} 
-                  fps={fps} 
-                  isPlaying={isPlaying}
-                  activeFrameIndex={activeFrameIndex}
-                />
-                <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 p-4 border rounded-lg bg-black/20">
-                  <Button variant="outline" size="icon" onClick={() => setIsPlaying(!isPlaying)}>
-                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                  </Button>
-                  <Slider defaultValue={[10]} min={1} max={30} step={1} onValueChange={(value) => setFps(value[0])} />
-                  <span className="text-sm font-medium w-16 text-center">{fps} FPS</span>
-                </div>
-                <SortableContext items={frames} strategy={horizontalListSortingStrategy}>
-                  <FrameTimeline 
-                    frames={frames} 
-                    activeFrameIndex={activeFrameIndex} 
-                    onSelect={setActiveFrameIndex} 
-                    onDuplicate={handleDuplicateFrame} 
-                    onDelete={handleDeleteFrame} 
-                  />
-                </SortableContext>
-              </div>
-            </div>
-          </DndContext>
+          <AnimationStudioPanel
+            dndSensors={sensors}
+            onDragEnd={handleDragEnd}
+            activeFrameConfig={activeFrameConfig}
+            onUpdateFrame={handleUpdateFrame}
+            onAddFrame={handleAddFrame}
+            onGenerateGif={handleGenerateGif}
+            isGenerating={isGenerating}
+            animationProps={{
+              frames: frames.map(f => f.config),
+              fps: fps,
+              isPlaying: isPlaying,
+              activeFrameIndex: activeFrameIndex
+            }}
+            onPlayPause={() => setIsPlaying(!isPlaying)}
+            onFpsChange={setFps}
+            timelineProps={{
+              frames: frames,
+              activeFrameIndex: activeFrameIndex,
+              onSelect: setActiveFrameIndex,
+              onDuplicate: handleDuplicateFrame,
+              onDelete: handleDeleteFrame
+            }}
+          />
         </TabsContent>
       </Tabs>
     </div>

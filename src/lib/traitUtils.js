@@ -1,6 +1,6 @@
-// src/lib/traitUtils.js
+/* // src/lib/traitUtils.js */
 
-const TRAIT_COLOR_MAP = {
+export const TRAIT_COLOR_MAP = {
   zombie: '#ceddba',
   glitch: '#cc01ff',
   bubble: '#d543b0',
@@ -11,6 +11,26 @@ const TRAIT_COLOR_MAP = {
   onesie: '#ff8502',
   gold: '#ffd800',
   glow: '#38e9b7',
+  duck: '#ffec57', // yellow
+  froggie: '#88cc59',  // GREEN
+  turtle: '#88cc59',// GREEN
+  dino: '#88cc59',  // GREEN
+  wolf: '#a1a1aa',  // grey
+  seal: '#a1a1aa',  // grey
+  goat: '#a1a1aa',  // grey
+  koala: '#a8b1b6', // grey
+  bear: '#90664d',  // brown
+  bull: '#956a3c',  // brown
+  dog: '#b89570',  // light brown
+  cat: '#f0f0f0',   // light grey
+  chicken: '#ffffff',// white
+  panda: '#ffffff', // white
+  gorilla: '#5b5b5b', //dark grey
+  penguin: '#5b5b5b', //dark grey
+  monkey: '#c06d44', // light brown
+  pig: '#ffbcb1', // pink
+  shark: '#9ac9f2', // blue
+  fox: '#e37a1d', // orange
 };
 
 const DEFAULT_COLOR = '#FFFFFF';
