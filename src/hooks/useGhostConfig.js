@@ -232,12 +232,12 @@ export function useGhostConfig() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
 
-  const handleDownload = useCallback(() => {
+  const handleDownload = useCallback((size = 1410) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    const CANVAS_SIZE = 1410;
-    canvas.width = CANVAS_SIZE;
-    canvas.height = CANVAS_SIZE;
+    canvas.width = size;
+    canvas.height = size;
+
     const imagesToDraw = LAYER_ORDER.map(layer => {
       const url = TRAIT_MANIFEST[layer]?.options[staticConfig[layer]];
       if (url) {
@@ -250,16 +250,35 @@ export function useGhostConfig() {
       }
       return Promise.resolve(null);
     });
+
     Promise.all(imagesToDraw).then(images => {
       images.forEach(img => {
-        if (img) ctx.drawImage(img, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
+        if (img) ctx.drawImage(img, 0, 0, size, size);
       });
       const link = document.createElement('a');
-      link.download = 'dpgc-creation.png';
+      link.download = `dpgc-creation-${size}px.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     });
   }, [staticConfig]);
+
+
+  // This new effect enforces the rule for the translucent_muscles skin
+  useEffect(() => {
+    if (staticConfig.skin === 'translucent_muscles') {
+      const requiredLeftHand = 'muscles_left_translucent';
+      const requiredRightHand = 'muscles_right_translucent';
+
+      // Only update if the hands are not already correct, to prevent infinite loops
+      if (staticConfig.hand_left !== requiredLeftHand || staticConfig.hand_right !== requiredRightHand) {
+        setStaticConfig(prevConfig => ({
+          ...prevConfig,
+          hand_left: requiredLeftHand,
+          hand_right: requiredRightHand,
+        }));
+      }
+    }
+  }, [staticConfig.skin, staticConfig.hand_left, staticConfig.hand_right]);
 
   return {
     staticConfig,

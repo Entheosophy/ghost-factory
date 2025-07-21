@@ -4,10 +4,9 @@ import { TRAIT_MANIFEST, LAYER_ORDER, UI_ORDER } from '@/data/traits';
 import { TraitSelector } from '@/components/TraitSelector';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Lock, Unlock } from 'lucide-react';
 import NftLoader from '@/components/NftLoader';
+import ActionPanel from './ActionPanel'; // Import the new component
 
 export function StaticComposerPanel({
   staticConfig,
@@ -23,6 +22,7 @@ export function StaticComposerPanel({
 }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Left Panel: Controls */}
       <Card className="lg:col-span-1 bg-card/80">
         <CardHeader>
           <CardTitle className="text-2xl tracking-widest text-center">GHOST FACTORY</CardTitle>
@@ -57,32 +57,31 @@ export function StaticComposerPanel({
               </Button>
             </div>
           ))}
-          <div className="pt-4 space-y-3">
-            <div className="flex items-center justify-center space-x-2 pb-2">
-              <Label htmlFor="randomize-mode">Fully Random</Label>
-              <Switch 
-                id="randomize-mode" 
-                checked={randomizeMode === 'cohesive'}
-                onCheckedChange={(checked) => onModeChange(checked ? 'cohesive' : 'full')} 
-              />
-              <Label htmlFor="randomize-mode">Semi-Cohesive</Label>
-            </div>
-            <Button onClick={onRandomize} variant="holographic" className="w-full text-lg">Randomize</Button>
-            <Button onClick={onDownload} variant="outline" className="w-full text-lg">Download PNG</Button>
-          </div>
+          {/* Action buttons are now removed from this card */}
         </CardContent>
       </Card>
-      <div className="lg:col-span-2 w-full aspect-square p-2 rounded-lg border bg-black/20">
-        <div className="relative w-full h-full">
-          {LAYER_ORDER.map(layerKey => {
-            const optionKey = staticConfig[layerKey];
-            if (!optionKey) return null;
-            const url = TRAIT_MANIFEST[layerKey]?.options[optionKey];
-            return url ? (
-              <img key={layerKey} src={url} alt={`${layerKey} - ${optionKey}`} className="absolute top-0 left-0 w-full h-full" />
-            ) : null;
-          })}
+      
+      {/* Right side: Preview and Actions */}
+      <div className="lg:col-span-2 flex flex-col gap-4">
+        <div className="w-full aspect-square p-2 rounded-lg border bg-black/20">
+          <div className="relative w-full h-full">
+            {LAYER_ORDER.map(layerKey => {
+              const optionKey = staticConfig[layerKey];
+              if (!optionKey) return null;
+              const url = TRAIT_MANIFEST[layerKey]?.options[optionKey];
+              return url ? (
+                <img key={layerKey} src={url} alt={`${layerKey} - ${optionKey}`} className="absolute top-0 left-0 w-full h-full" />
+              ) : null;
+            })}
+          </div>
         </div>
+
+        <ActionPanel 
+          randomizeMode={randomizeMode}
+          onModeChange={onModeChange}
+          onRandomize={onRandomize}
+          onDownload={onDownload}
+        />
       </div>
     </div>
   );
