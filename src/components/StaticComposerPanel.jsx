@@ -50,7 +50,10 @@ export function StaticComposerPanel({
                 className="shrink-0 mt-6"
                 aria-label={lockedTraits[layerKey] ? `Unlock ${layerKey}` : `Lock ${layerKey}`}
               >
-                {lockedTraits[layerKey] ? <Lock className="h-4 w-4 text-primary" /> : <Unlock className="h-4 w-4" />}
+                {lockedTraits[layerKey] 
+                  ? <Lock className="h-4 w-4 text-primary" /> 
+                  : <Unlock className="h-4 w-4 text-muted-foreground" />
+                }
               </Button>
             </div>
           ))}
