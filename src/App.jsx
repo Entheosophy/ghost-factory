@@ -18,7 +18,7 @@ const COHESIVE_THEMES = ['zombie', 'onesie', 'goblin', 'glitch', 'gold', 'robot'
 function App() {
   // State for Static Composer
   const [staticConfig, setStaticConfig] = useState({});
-  const [randomizeMode, setRandomizeMode] = useState('full'); // 'full' or 'cohesive'
+  const [randomizeMode, setRandomizeMode] = useState('cohesive'); // 'full' or 'cohesive'
   const [lockedTraits, setLockedTraits] = useState({});
   
   // State for Animation Studio
@@ -73,7 +73,31 @@ function App() {
     const skinParts = selectedSkinKey.split('_');
     let skinTheme = COHESIVE_THEMES.find(theme => skinParts.includes(theme)) || skinParts[0];
 
-    ['background', 'propulsion', 'head', 'eyes', 'mouth'].forEach(layerKey => {
+    // FIX: Handle propulsion with weighted jetpack chance first
+    if (!lockedTraits.propulsion) {
+      const trait = TRAIT_MANIFEST.propulsion;
+      if (trait) {
+        let allOptions = Object.keys(trait.options).filter(k => k !== 'none');
+        if (skinTheme !== 'onesie') {
+          allOptions = allOptions.filter(key => !key.includes('onesie'));
+        }
+        
+        const jetpackOptions = allOptions.filter(key => key.includes('jetpack'));
+        const otherOptions = allOptions.filter(key => !key.includes('jetpack'));
+
+        if (Math.random() < 0.5 && jetpackOptions.length > 0) {
+          newConfig.propulsion = jetpackOptions[Math.floor(Math.random() * jetpackOptions.length)];
+        } else if (otherOptions.length > 0) {
+          newConfig.propulsion = otherOptions[Math.floor(Math.random() * otherOptions.length)];
+        } else if (jetpackOptions.length > 0) {
+          newConfig.propulsion = jetpackOptions[Math.floor(Math.random() * jetpackOptions.length)];
+        } else {
+          newConfig.propulsion = 'none';
+        }
+      }
+    }
+
+    ['background', 'head', 'eyes', 'mouth'].forEach(layerKey => {
       if (!lockedTraits[layerKey]) {
         const trait = TRAIT_MANIFEST[layerKey];
         if (trait) {
@@ -124,32 +148,42 @@ function App() {
         }
         if (!lockedTraits.hand_right) newConfig.hand_right = 'none';
     } else {
-        if (!lockedTraits.hand_left) {
-          let pool = Object.keys(TRAIT_MANIFEST.hand_left.options).filter(k => !k.includes('jetpack'));
-          if (skinTheme !== 'onesie') pool = pool.filter(k => !k.includes('onesie'));
-          const themeOptions = pool.filter(k => k.includes(skinTheme));
-          if (themeOptions.length > 0) newConfig.hand_left = themeOptions[Math.floor(Math.random() * themeOptions.length)];
-        }
-        if (!lockedTraits.hand_right) {
-          let pool = Object.keys(TRAIT_MANIFEST.hand_right.options);
-          if (skinTheme !== 'onesie') pool = pool.filter(k => !k.includes('onesie'));
-          const themeOptions = pool.filter(k => k.includes(skinTheme));
-          if (themeOptions.length > 0) newConfig.hand_right = themeOptions[Math.floor(Math.random() * themeOptions.length)];
-        }
-    }
+        // FIX: Proactively decide if we should use muscles based on a chance
+        const MUSCLE_CHANCE = 0.20; // 20% chance
+        let useMuscles = Math.random() < MUSCLE_CHANCE;
 
-    if ((newConfig.hand_left || '').includes('muscles') || (newConfig.hand_right || '').includes('muscles')) {
-        if (!lockedTraits.hand_left && !lockedTraits.hand_right) {
-            let suffix = skinTheme;
-            if (skinTheme === 'onesie') {
-                const animal = Object.keys(ONESIE_HAND_SUFFIX_MAP).find(a => selectedSkinKey.includes(a));
-                if (animal) suffix = ONESIE_HAND_SUFFIX_MAP[animal];
+        let suffix = skinTheme;
+        if (skinTheme === 'onesie') {
+            const animal = Object.keys(ONESIE_HAND_SUFFIX_MAP).find(a => selectedSkinKey.includes(a));
+            suffix = animal ? ONESIE_HAND_SUFFIX_MAP[animal] : 'white';
+        }
+        const leftKey = `${skinTheme === 'onesie' ? 'onesie_' : ''}muscles_left_${suffix}`;
+        const rightKey = `${skinTheme === 'onesie' ? 'onesie_' : ''}muscles_right_${suffix}`;
+        
+        if (useMuscles && (!TRAIT_MANIFEST.hand_left.options[leftKey] || !TRAIT_MANIFEST.hand_right.options[rightKey])) {
+            useMuscles = false; // Disable if the matching muscle set doesn't exist for the theme
+        }
+
+        if (useMuscles && !lockedTraits.hand_left && !lockedTraits.hand_right) {
+            newConfig.hand_left = leftKey;
+            newConfig.hand_right = rightKey;
+        } else {
+            // Default path: randomize non-jetpack, non-muscle hands
+            if (!lockedTraits.hand_left) {
+              let pool = Object.keys(TRAIT_MANIFEST.hand_left.options).filter(k => !k.includes('jetpack') && !k.includes('muscles'));
+              if (skinTheme !== 'onesie') pool = pool.filter(k => !k.includes('onesie'));
+              
+              const themeOptions = pool.filter(k => k.includes(skinTheme));
+              const finalPool = themeOptions.length > 0 ? themeOptions : pool.filter(k => k !== 'none');
+              newConfig.hand_left = finalPool.length > 0 ? finalPool[Math.floor(Math.random() * finalPool.length)] : 'none';
             }
-            const leftKey = `${skinTheme === 'onesie' ? 'onesie_' : ''}muscles_left_${suffix}`;
-            const rightKey = `${skinTheme === 'onesie' ? 'onesie_' : ''}muscles_right_${suffix}`;
-            if (TRAIT_MANIFEST.hand_left.options[leftKey] && TRAIT_MANIFEST.hand_right.options[rightKey]) {
-                newConfig.hand_left = leftKey;
-                newConfig.hand_right = rightKey;
+            if (!lockedTraits.hand_right) {
+              let pool = Object.keys(TRAIT_MANIFEST.hand_right.options).filter(k => !k.includes('muscles'));
+              if (skinTheme !== 'onesie') pool = pool.filter(k => !k.includes('onesie'));
+              
+              const themeOptions = pool.filter(k => k.includes(skinTheme));
+              const finalPool = themeOptions.length > 0 ? themeOptions : pool.filter(k => k !== 'none');
+              newConfig.hand_right = finalPool.length > 0 ? finalPool[Math.floor(Math.random() * finalPool.length)] : 'none';
             }
         }
     }
