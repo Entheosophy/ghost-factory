@@ -467,8 +467,10 @@ export const TRAIT_MANIFEST = {
     }
 };
 
-// This original order is still used for generating the images correctly.
+// This original order is used for GENERATING the IMAGES correctly.
 export const LAYER_ORDER = ['background', 'skin', 'propulsion', 'hand_left', 'eyes', 'mouth', 'head', 'hand_right'];
 
-// THE FIX: This new array defines the order for the UI menu only.
+// This array defines the order for the UI MENU only.
 export const UI_ORDER = ['background', 'skin', 'propulsion', 'head', 'eyes', 'mouth', 'hand_left', 'hand_right'];
+
+export const COHESIVE_THEMES = ['zombie', 'onesie', 'goblin', 'glitch', 'gold', 'robot', 'ice', 'white', 'translucent', 'translucent muscles'];

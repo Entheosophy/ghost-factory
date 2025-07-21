@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Lock, Unlock } from 'lucide-react';
+import NftLoader from '@/components/NftLoader';
 
 export function StaticComposerPanel({
   staticConfig,
@@ -16,7 +17,9 @@ export function StaticComposerPanel({
   onToggleLock,
   onRandomize,
   onDownload,
-  onModeChange
+  onModeChange,
+  onNftLoad,
+  isNftLoading
 }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -26,6 +29,10 @@ export function StaticComposerPanel({
           <CardDescription className="text-center">Static Composer</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="border-b border-dashed border-border pb-4">
+            <NftLoader onNftLoad={onNftLoad} isLoading={isNftLoading} />
+          </div>
+          
           {UI_ORDER.map(layerKey => (
             <div key={layerKey} className="flex items-center gap-2">
               <div className="flex-1">

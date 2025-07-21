@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Slider } from "@/components/ui/slider";
 import { Play, Pause } from 'lucide-react';
+import NftLoader from '@/components/NftLoader';
 
 export function AnimationStudioPanel({
   dndSensors,
@@ -22,7 +23,9 @@ export function AnimationStudioPanel({
   animationProps,
   onPlayPause,
   onFpsChange,
-  timelineProps
+  timelineProps,
+  onNftLoad,
+  isNftLoading
 }) {
   return (
     <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
@@ -33,6 +36,10 @@ export function AnimationStudioPanel({
             <CardDescription className="text-center">Animation Studio</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="border-b border-dashed border-border pb-4">
+              <NftLoader onNftLoad={onNftLoad} isLoading={isNftLoading} />
+            </div>
+
             {UI_ORDER.map(layerKey => (
               <TraitSelector
                 key={layerKey}
