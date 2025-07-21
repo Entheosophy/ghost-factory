@@ -11,6 +11,7 @@ export const TRAIT_COLOR_MAP = {
   onesie: '#ff8502',
   gold: '#ffd800',
   glow: '#38e9b7',
+  // Onesies
   duck: '#ffec57', // yellow
   froggie: '#88cc59',  // GREEN
   turtle: '#88cc59',// GREEN
