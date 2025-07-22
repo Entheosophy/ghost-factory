@@ -12,6 +12,25 @@ export function useAnimation(staticConfig) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  const handleAddFrame = useCallback((config) => {
+    const newConfig = config || (frames.length > 0 ? { ...frames[activeFrameIndex].config } : staticConfig);
+    const newFrame = { id: self.crypto.randomUUID(), config: newConfig };
+    setFrames(currentFrames => [...currentFrames, newFrame]);
+    setActiveFrameIndex(frames.length);
+  }, [frames, activeFrameIndex, staticConfig]);
+
+  const replaceCurrentFrame = useCallback((newConfig) => {
+    if (frames.length === 0 || activeFrameIndex < 0) {
+      handleAddFrame(newConfig);
+    } else {
+      setFrames(currentFrames => {
+        const newFrames = [...currentFrames];
+        newFrames[activeFrameIndex].config = newConfig;
+        return newFrames;
+      });
+    }
+  }, [frames, activeFrameIndex, handleAddFrame]);
+
   const handleUpdateFrame = useCallback((layer, optionKey) => {
     if (frames.length === 0) return;
     setFrames(currentFrames => {
@@ -20,13 +39,6 @@ export function useAnimation(staticConfig) {
       return newFrames;
     });
   }, [frames.length, activeFrameIndex]);
-
-  const handleAddFrame = useCallback(() => {
-    const newConfig = frames.length > 0 ? { ...frames[activeFrameIndex].config } : staticConfig;
-    const newFrame = { id: self.crypto.randomUUID(), config: newConfig };
-    setFrames(currentFrames => [...currentFrames, newFrame]);
-    setActiveFrameIndex(frames.length);
-  }, [frames, activeFrameIndex, staticConfig]);
 
   const handleDuplicateFrame = useCallback((index) => {
     const frameToDuplicate = { ...frames[index], id: self.crypto.randomUUID() };
@@ -57,18 +69,17 @@ export function useAnimation(staticConfig) {
     }
   }, []);
 
-  const handleGenerateGif = useCallback(async () => {
+  const handleGenerateGif = useCallback(async (size = 470) => {
     if (frames.length === 0) return;
     setIsGenerating(true);
     const gif = new GIF({ workers: 2, quality: 10, workerScript: '/gif.worker.js' });
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    const CANVAS_SIZE = 512;
-    canvas.width = CANVAS_SIZE;
-    canvas.height = CANVAS_SIZE;
+    canvas.width = size;
+    canvas.height = size;
     for (const frame of frames) {
       const displayOrder = getDisplayOrder(frame.config);
-      const imagesToDraw = LAYER_ORDER.map(layer => {
+      const imagesToDraw = displayOrder.map(layer => {
         const url = TRAIT_MANIFEST[layer]?.options[frame.config[layer]];
         return url ? new Promise(resolve => {
           const img = new Image();
@@ -78,16 +89,16 @@ export function useAnimation(staticConfig) {
         }) : Promise.resolve(null);
       });
       const loadedImages = await Promise.all(imagesToDraw);
-      ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+      ctx.clearRect(0, 0, size, size);
       loadedImages.forEach(img => {
-        if (img) ctx.drawImage(img, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
+        if (img) ctx.drawImage(img, 0, 0, size, size);
       });
       gif.addFrame(canvas, { copy: true, delay: 1000 / fps });
     }
     gif.on('finished', (blob) => {
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = 'ghost-animation.gif';
+      link.download = `ghost-animation-${size}px.gif`;
       link.click();
       setIsGenerating(false);
     });
@@ -103,8 +114,9 @@ export function useAnimation(staticConfig) {
     fps,
     isPlaying,
     isGenerating,
+    replaceCurrentFrame,
     onUpdateFrame: handleUpdateFrame,
-    onAddFrame: handleAddFrame,
+    onAddFrame: () => handleAddFrame(null),
     onDuplicateFrame: handleDuplicateFrame,
     onDeleteFrame: handleDeleteFrame,
     onDragEnd: handleDragEnd,

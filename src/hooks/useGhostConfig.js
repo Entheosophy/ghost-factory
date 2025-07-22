@@ -7,7 +7,6 @@ export function useGhostConfig() {
   const [staticConfig, setStaticConfig] = useState({});
   const [randomizeMode, setRandomizeMode] = useState('cohesive');
   const [lockedTraits, setLockedTraits] = useState({});
-  const [isNftLoading, setIsNftLoading] = useState(false);
 
   const handleToggleLock = useCallback((layer) => {
     setLockedTraits(prev => ({ ...prev, [layer]: !prev[layer] }));
@@ -16,63 +15,6 @@ export function useGhostConfig() {
   const handleSelectStaticTrait = useCallback((layer, optionKey) => {
     setStaticConfig(prevConfig => ({ ...prevConfig, [layer]: optionKey }));
   }, []);
-
-  const handleLoadNft = useCallback(async (serial) => {
-    setIsNftLoading(true);
-    const tokenId = '0.0.878200';
-    const mirrorNodeUrl = `https://mainnet-public.mirrornode.hedera.com/api/v1/tokens/${tokenId}/nfts/${serial}`;
-    try {
-      const mirrorResponse = await fetch(mirrorNodeUrl);
-      if (!mirrorResponse.ok) throw new Error(`NFT #${serial} not found.`);
-      const nftData = await mirrorResponse.json();
-      const ipfsPointer = atob(nftData.metadata);
-      if (!ipfsPointer.startsWith('ipfs://')) throw new Error('Unsupported metadata format.');
-      
-      const ipfsCid = ipfsPointer.replace('ipfs://', '');
-      const ipfsUrl = `https://ipfs.io/ipfs/${ipfsCid}`;
-      const ipfsResponse = await fetch(ipfsUrl);
-      if (!ipfsResponse.ok) throw new Error(`Could not retrieve metadata from IPFS.`);
-      const metadataJson = await ipfsResponse.json();
-
-      const rawAttributes = {};
-      metadataJson.attributes.forEach(attr => {
-        const layerKey = attr.trait_type.toLowerCase().replace(/ /g, '_');
-        rawAttributes[layerKey] = attr.value.toLowerCase();
-      });
-
-      const skinValue = rawAttributes.skin || '';
-      const skinTheme = COHESIVE_THEMES.find(theme => skinValue.includes(theme));
-      const newConfig = {};
-      const allLayerKeys = Object.keys(TRAIT_MANIFEST);
-
-      allLayerKeys.forEach(layerKey => {
-        if (lockedTraits[layerKey]) {
-          newConfig[layerKey] = staticConfig[layerKey];
-          return;
-        }
-        const cleanValue = rawAttributes[layerKey]?.replace(/ /g, '_');
-        if (!cleanValue || cleanValue === 'none') {
-          newConfig[layerKey] = 'none';
-          return;
-        }
-        const optionsForLayer = Object.keys(TRAIT_MANIFEST[layerKey].options);
-        let foundKey = null;
-        if (skinTheme && layerKey !== 'skin' && layerKey !== 'background') {
-          const possibleKeys = [`${cleanValue}_${skinTheme}`, `${skinTheme}_${cleanValue}`];
-          if (skinTheme === 'onesie') possibleKeys.push(`${cleanValue}_onesie`, `onesie_${cleanValue}`);
-          foundKey = optionsForLayer.find(optKey => possibleKeys.includes(optKey.toLowerCase()));
-        }
-        if (!foundKey) foundKey = optionsForLayer.find(optKey => optKey.toLowerCase() === cleanValue);
-        newConfig[layerKey] = foundKey || 'none';
-      });
-      setStaticConfig(newConfig);
-    } catch (error) {
-      console.error("Failed to load NFT:", error);
-      alert(error.message);
-    } finally {
-      setIsNftLoading(false);
-    }
-  }, [lockedTraits, staticConfig]);
 
   const handleRandomizeStatic = useCallback(() => {
     const newConfig = { ...staticConfig };
@@ -97,10 +39,8 @@ export function useGhostConfig() {
     const selectedSkinKey = newConfig.skin || '';
     const skinParts = selectedSkinKey.split('_');
     const skinTheme = COHESIVE_THEMES.find(theme => skinParts.includes(theme)) || skinParts[0];
-
     const pools = {};
     const layersToProcess = ['background', 'propulsion', 'head', 'eyes', 'mouth', 'hand_left', 'hand_right'];
-    
     layersToProcess.forEach(layerKey => {
         if (lockedTraits[layerKey]) return;
         if (layerKey === 'propulsion' && selectedSkinKey === 'translucent_muscles') {
@@ -122,7 +62,6 @@ export function useGhostConfig() {
             pools[layerKey] = [...themePool, ...defaultPool];
         }
     });
-
     ['background', 'head', 'eyes', 'mouth'].forEach(layerKey => {
         if (pools[layerKey] && pools[layerKey].length > 0) {
             newConfig[layerKey] = pools[layerKey][Math.floor(Math.random() * pools[layerKey].length)];
@@ -130,7 +69,6 @@ export function useGhostConfig() {
             newConfig[layerKey] = 'none';
         }
     });
-    
     if (pools.propulsion && pools.propulsion.length > 0) {
         const jetpackOptions = pools.propulsion.filter(key => key.includes('jetpack'));
         const otherOptions = pools.propulsion.filter(key => !key.includes('jetpack'));
@@ -144,11 +82,9 @@ export function useGhostConfig() {
     } else if (!lockedTraits.propulsion) {
         newConfig.propulsion = 'none';
     }
-
     const propulsionTrait = newConfig.propulsion || '';
     const isJetpack = propulsionTrait.includes('jetpack');
     const ONESIE_HAND_SUFFIX_MAP = { duck: 'duck', fox: 'fox', pig: 'pig', shark: 'shark', bear: 'bear', bull: 'bull', cat: 'cat', dog: 'dog', wolf: 'wolf', goat: 'goat', koala: 'koala', monkey: 'monkey', froggie: 'green', turtle: 'green', dino: 'green', seal: 'grey', penguin: 'grey', gorilla: 'grey', chicken: 'white', panda: 'white' };
-    
     if (isJetpack) {
         if (!lockedTraits.hand_left) {
             let targetLeftKey = null;
@@ -211,12 +147,10 @@ export function useGhostConfig() {
             }
         }
     }
-
     if (!lockedTraits.mouth && (newConfig.mouth === 'none' || newConfig.mouth === null) && newConfig.eyes !== 'mask_skull') {
         const mouthOptions = Object.keys(TRAIT_MANIFEST.mouth.options).filter(key => key !== 'none' && key !== null);
         if (mouthOptions.length > 0) newConfig.mouth = mouthOptions[Math.floor(Math.random() * mouthOptions.length)];
     }
-    
     setStaticConfig(newConfig);
   }, [lockedTraits, staticConfig]);
 
@@ -230,7 +164,7 @@ export function useGhostConfig() {
 
   useEffect(() => {
     handleRandomizeClick();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDownload = useCallback((size = 1410) => {
     const canvas = document.createElement('canvas');
@@ -266,7 +200,6 @@ export function useGhostConfig() {
       const updates = {};
       const requiredLeftHand = 'muscles_left_translucent';
       const requiredRightHand = 'muscles_right_translucent';
-
       if (staticConfig.hand_left !== requiredLeftHand || staticConfig.hand_right !== requiredRightHand) {
         updates.hand_left = requiredLeftHand;
         updates.hand_right = requiredRightHand;
@@ -282,14 +215,13 @@ export function useGhostConfig() {
 
   return {
     staticConfig,
+    setStaticConfig, // Expose setter
     lockedTraits,
     randomizeMode,
-    isNftLoading,
     onModeChange: setRandomizeMode,
     onToggleLock: handleToggleLock,
     onTraitSelect: handleSelectStaticTrait,
     onRandomize: handleRandomizeClick,
     onDownload: handleDownload,
-    onNftLoad: handleLoadNft,
   };
 }

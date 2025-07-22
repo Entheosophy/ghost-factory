@@ -32,11 +32,11 @@ export default function ActionPanel({ randomizeMode, onModeChange, onRandomize, 
             <DropdownMenuItem onClick={() => onDownload(1410)}>
               Large (1410px) - Original
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDownload(512)}>
-              Medium (512px) - Sticker
+            <DropdownMenuItem onClick={() => onDownload(470)}>
+              Medium (470px) - Sticker
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDownload(128)}>
-              Small (128px) - Emoji
+            <DropdownMenuItem onClick={() => onDownload(141)}>
+              Small (141px) - Emoji
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

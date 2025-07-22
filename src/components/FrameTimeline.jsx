@@ -3,6 +3,7 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { TRAIT_MANIFEST } from '@/data/traits';
+import { getDisplayOrder } from '@/lib/traitUtils';
 import { Button } from '@/components/ui/button';
 import { X, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -10,9 +11,11 @@ import { cn } from '@/lib/utils';
 // A small component to render a single frame's thumbnail
 function FramePreview({ config }) {
   if (!config) return null;
+  const displayOrder = getDisplayOrder(config);
+
   return (
     <div className="relative w-full h-full bg-slate-800 rounded-md overflow-hidden">
-      {LAYER_ORDER.map(layerKey => {
+      {displayOrder.map(layerKey => {
         const optionKey = config[layerKey];
         if (!optionKey) return null;
         const url = TRAIT_MANIFEST[layerKey]?.options[optionKey];
@@ -50,7 +53,6 @@ function SortableFrame({ frame, index, activeFrameIndex, onSelect, onDuplicate, 
         variant="outline"
         className={cn(
           "w-24 h-24 p-1 border-2 border-border cursor-grab active:cursor-grabbing transition-opacity",
-          // THE FIX: Use opacity for a clear, non-conflicting visual highlight.
           activeFrameIndex === index ? "opacity-100" : "opacity-60"
         )}
         onClick={() => onSelect(index)}
