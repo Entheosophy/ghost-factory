@@ -54,3 +54,33 @@ export function getTraitColor(traitKey) {
 
   return DEFAULT_COLOR;
 }
+
+
+// --- NEWLY ADDED FOR DUCK MASK FIX ---
+
+// Moved from traits.js to be accessible by the utility function
+export const LAYER_ORDER = ['background', 'skin', 'propulsion', 'hand_left', 'mouth', 'eyes', 'head', 'hand_right'];
+
+/**
+ * Returns the correct display order for layers.
+ * If a duck mask is selected, it moves the 'mouth' layer to render after 'head'.
+ * @param {object} config The current staticConfig object.
+ * @returns {string[]} An array of layer keys in the correct rendering order.
+ */
+export function getDisplayOrder(config) {
+  if (config?.mouth?.includes('mask_duck')) {
+    const defaultOrder = [...LAYER_ORDER];
+    // Find and remove 'mouth'
+    const mouthIndex = defaultOrder.indexOf('mouth');
+    if (mouthIndex === -1) return LAYER_ORDER; // Safety check
+    const mouth = defaultOrder.splice(mouthIndex, 1)[0];
+    
+    // Find 'head' and insert 'mouth' after it
+    const headIndex = defaultOrder.indexOf('head');
+    if (headIndex === -1) return LAYER_ORDER; // Safety check
+    defaultOrder.splice(headIndex + 1, 0, mouth);
+    
+    return defaultOrder;
+  }
+  return LAYER_ORDER;
+}

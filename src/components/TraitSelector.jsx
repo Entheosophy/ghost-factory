@@ -77,7 +77,16 @@ export function TraitSelector({ layer, trait, currentSelection, onSelect }) {
   const options = useMemo(() => {
     const keys = Object.keys(trait.options);
     const noneKey = keys.find(k => k.toLowerCase() === 'none');
-    const otherKeys = keys.filter(k => k.toLowerCase() !== 'none').sort();
+    
+    // This is the updated sorting logic
+    const otherKeys = keys
+      .filter(k => k.toLowerCase() !== 'none')
+      .sort((a, b) => {
+        const sortA = a.startsWith('white_') ? a.substring(6) : a;
+        const sortB = b.startsWith('white_') ? b.substring(6) : b;
+        return sortA.localeCompare(sortB);
+      });
+      
     const sortedKeys = noneKey ? [noneKey, ...otherKeys] : otherKeys;
 
     return sortedKeys.map(optionKey => ({

@@ -2,7 +2,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { TRAIT_MANIFEST, LAYER_ORDER } from '@/data/traits';
+import { TRAIT_MANIFEST } from '@/data/traits';
 import { Button } from '@/components/ui/button';
 import { X, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';

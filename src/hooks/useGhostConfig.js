@@ -1,6 +1,7 @@
 /* // src/hooks/useGhostConfig.js */
 import { useState, useEffect, useCallback } from 'react';
-import { TRAIT_MANIFEST, LAYER_ORDER, COHESIVE_THEMES } from '@/data/traits';
+import { TRAIT_MANIFEST, COHESIVE_THEMES } from '@/data/traits';
+import { getDisplayOrder, LAYER_ORDER } from '@/lib/traitUtils'; 
 
 export function useGhostConfig() {
   const [staticConfig, setStaticConfig] = useState({});
@@ -89,7 +90,6 @@ export function useGhostConfig() {
 
   const handleCohesiveRandomize = useCallback(() => {
     const newConfig = { ...staticConfig };
-
     if (!lockedTraits.skin) {
         const skinOptions = Object.keys(TRAIT_MANIFEST.skin.options);
         newConfig.skin = skinOptions[Math.floor(Math.random() * skinOptions.length)];
@@ -103,10 +103,17 @@ export function useGhostConfig() {
     
     layersToProcess.forEach(layerKey => {
         if (lockedTraits[layerKey]) return;
+        if (layerKey === 'propulsion' && selectedSkinKey === 'translucent_muscles') {
+            const allPropulsion = Object.keys(TRAIT_MANIFEST.propulsion.options);
+            pools[layerKey] = allPropulsion.filter(key => !key.includes('jetpack'));
+            return;
+        }
         const allOptions = Object.keys(TRAIT_MANIFEST[layerKey].options).filter(k => k !== 'none' && k !== null);
         const themePool = allOptions.filter(key => key.includes(skinTheme));
         const defaultPool = allOptions.filter(key => !COHESIVE_THEMES.some(theme => key.includes(theme)));
-        if (skinTheme === 'onesie' && layerKey === 'propulsion') {
+        if (skinTheme === 'robot' && (layerKey === 'eyes' || layerKey === 'mouth')) {
+            pools[layerKey] = themePool;
+        } else if (skinTheme === 'onesie' && layerKey === 'propulsion') {
             pools[layerKey] = themePool;
         } else if (skinTheme === 'onesie' && layerKey === 'mouth') {
             const filteredDefaults = defaultPool.filter(key => key !== 'drool' && key !== 'mask_duck');
@@ -160,7 +167,6 @@ export function useGhostConfig() {
         const WATERGUN_CHANCE = 0.15;
         let useMuscles = Math.random() < MUSCLE_CHANCE;
         let useWatergun = !useMuscles && (Math.random() < WATERGUN_CHANCE);
-
         if (useMuscles) {
             let suffix = skinTheme;
             if (skinTheme === 'onesie') {
@@ -170,14 +176,13 @@ export function useGhostConfig() {
             const leftKey = `onesie_muscles_left_${suffix}`;
             const rightKey = `onesie_muscles_right_${suffix}`;
             if (!TRAIT_MANIFEST.hand_left.options[leftKey] || !TRAIT_MANIFEST.hand_right.options[rightKey]) {
-                useMuscles = false; // Abort if pair doesn't exist
+                useMuscles = false;
             }
             if (useMuscles && !lockedTraits.hand_left && !lockedTraits.hand_right) {
                 newConfig.hand_left = leftKey;
                 newConfig.hand_right = rightKey;
             }
         } 
-        
         if (useWatergun) {
             const leftWatergun = pools.hand_left?.find(k => k.includes('watergun'));
             const rightWatergun = pools.hand_right?.find(k => k.includes('watergun'));
@@ -185,10 +190,9 @@ export function useGhostConfig() {
                 newConfig.hand_left = leftWatergun;
                 newConfig.hand_right = rightWatergun;
             } else {
-                useWatergun = false; // Abort if pair doesn't exist
+                useWatergun = false;
             }
         }
-        
         if (!useMuscles && !useWatergun) {
             if (!lockedTraits.hand_left && pools.hand_left) {
                 const finalPool = pools.hand_left.filter(k => !k.includes('muscles') && !k.includes('jetpack'));
@@ -216,7 +220,6 @@ export function useGhostConfig() {
     setStaticConfig(newConfig);
   }, [lockedTraits, staticConfig]);
 
-   
   const handleRandomizeClick = useCallback(() => {
     if (randomizeMode === 'cohesive') {
       handleCohesiveRandomize();
@@ -234,7 +237,8 @@ export function useGhostConfig() {
     const ctx = canvas.getContext('2d');
     canvas.width = size;
     canvas.height = size;
-    const imagesToDraw = LAYER_ORDER.map(layer => {
+    const displayOrder = getDisplayOrder(staticConfig);
+    const imagesToDraw = displayOrder.map(layer => {
       const url = TRAIT_MANIFEST[layer]?.options[staticConfig[layer]];
       if (url) {
         return new Promise((resolve) => {
@@ -259,17 +263,22 @@ export function useGhostConfig() {
 
   useEffect(() => {
     if (staticConfig.skin === 'translucent_muscles') {
+      const updates = {};
       const requiredLeftHand = 'muscles_left_translucent';
       const requiredRightHand = 'muscles_right_translucent';
+
       if (staticConfig.hand_left !== requiredLeftHand || staticConfig.hand_right !== requiredRightHand) {
-        setStaticConfig(prevConfig => ({
-          ...prevConfig,
-          hand_left: requiredLeftHand,
-          hand_right: requiredRightHand,
-        }));
+        updates.hand_left = requiredLeftHand;
+        updates.hand_right = requiredRightHand;
+      }
+      if (staticConfig.propulsion?.includes('jetpack')) {
+        updates.propulsion = 'none';
+      }
+      if (Object.keys(updates).length > 0) {
+        setStaticConfig(prevConfig => ({ ...prevConfig, ...updates }));
       }
     }
-  }, [staticConfig.skin, staticConfig.hand_left, staticConfig.hand_right]);
+  }, [staticConfig.skin, staticConfig.hand_left, staticConfig.hand_right, staticConfig.propulsion]);
 
   return {
     staticConfig,

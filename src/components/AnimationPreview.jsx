@@ -1,6 +1,6 @@
 /* // src/components/AnimationPreview.jsx */
 import React, { useState, useEffect } from 'react';
-import { TRAIT_MANIFEST, LAYER_ORDER } from '@/data/traits';
+import { TRAIT_MANIFEST } from '@/data/traits';
 
 export function AnimationPreview({ frames, fps, isPlaying, activeFrameIndex }) {
   const [playbackFrameIndex, setPlaybackFrameIndex] = useState(0);

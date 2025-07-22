@@ -104,6 +104,7 @@ export const TRAIT_MANIFEST = {
   options: {
     blobby_charm_fireball_blue: 'traits/hand_left/charm_fireball_blue$blobby.png',
     blobby_gesture_forward_left: 'traits/hand_left/gesture_forward_left$blobby.png',
+    blobby_jetpack_left: 'traits/hand_left/jetpack_left$blobby.png',
     muscles_left_blobby: 'traits/hand_left/muscles_left$blobby.png',
     blobby_vile_open_green: 'traits/hand_left/vile_open_green$blobby.png',
     drink_coffee: 'traits/hand_left/drink_coffee.png',
@@ -133,6 +134,8 @@ export const TRAIT_MANIFEST = {
     onesie_blade_knife_cat: 'traits/hand_left/blade_knife$onesie_cat.png',
     onesie_blade_knife_dog: 'traits/hand_left/blade_knife$onesie_dog.png',
     onesie_blade_knife_duck: 'traits/hand_left/blade_knife$onesie_duck.png',
+    onesie_blade_knife_fox: 'traits/hand_left/blade_knife$onesie_fox.png',
+    onesie_blade_knife_goat: 'traits/hand_left/blade_knife$onesie_goat.png',
     onesie_blade_knife_green: 'traits/hand_left/blade_knife$onesie_green.png',
     onesie_blade_knife_grey: 'traits/hand_left/blade_knife$onesie_grey.png',
     onesie_blade_knife_koala: 'traits/hand_left/blade_knife$onesie_koala.png',
@@ -140,6 +143,7 @@ export const TRAIT_MANIFEST = {
     onesie_blade_knife_pig: 'traits/hand_left/blade_knife$onesie_pig.png',
     onesie_blade_knife_shark: 'traits/hand_left/blade_knife$onesie_shark.png',
     onesie_blade_knife_white: 'traits/hand_left/blade_knife$onesie_white.png',
+    onesie_blade_knife_wolf: 'traits/hand_left/blade_knife$onesie_wolf.png',
     onesie_drink_coffee: 'traits/hand_left/drink_coffee$onesie.png',
     onesie_gloves_boxing_left: 'traits/hand_left/gloves_boxing_left$onesie.png',
     onesie_jetpack_left_bear: 'traits/hand_left/jetpack_left$onesie_bear.png',
@@ -148,6 +152,7 @@ export const TRAIT_MANIFEST = {
     onesie_jetpack_left_dog: 'traits/hand_left/jetpack_left$onesie_dog.png',
     onesie_jetpack_left_duck: 'traits/hand_left/jetpack_left$onesie_duck.png',
     onesie_jetpack_left_fox: 'traits/hand_left/jetpack_left$onesie_fox.png',
+    onesie_jetpack_left_goat: 'traits/hand_left/jetpack_left$onesie_goat.png',
     onesie_jetpack_left_koala: 'traits/hand_left/jetpack_left$onesie_koala.png',
     onesie_jetpack_left_pig: 'traits/hand_left/jetpack_left$onesie_pig.png',
     onesie_jetpack_left_monkey: 'traits/hand_left/jetpack_left$onesie_monkey.png',
@@ -155,6 +160,7 @@ export const TRAIT_MANIFEST = {
     onesie_jetpack_left_green: 'traits/hand_left/jetpack_left$onesie_green.png',
     onesie_jetpack_left_grey: 'traits/hand_left/jetpack_left$onesie_grey.png',
     onesie_jetpack_left_white: 'traits/hand_left/jetpack_left$onesie_white.png',
+    onesie_jetpack_left_wolf: 'traits/hand_left/jetpack_left$onesie_wolf.png',
     onesie_muscles_left_bear: 'traits/hand_left/muscles_left$onesie_bear.png',
     onesie_muscles_left_bull: 'traits/hand_left/muscles_left$onesie_bull.png',
     onesie_muscles_left_cat: 'traits/hand_left/muscles_left$onesie_cat.png',
@@ -477,9 +483,6 @@ export const TRAIT_MANIFEST = {
         }
     }
 };
-
-// This original order is used for GENERATING the IMAGES correctly.
-export const LAYER_ORDER = ['background', 'skin', 'propulsion', 'hand_left', 'mouth', 'eyes', 'head', 'hand_right'];
 
 // This array defines the order for the UI MENU only.
 export const UI_ORDER = ['background', 'skin', 'propulsion', 'head', 'eyes', 'mouth', 'hand_left', 'hand_right'];

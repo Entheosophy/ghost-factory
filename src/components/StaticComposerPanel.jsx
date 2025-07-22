@@ -1,12 +1,14 @@
 /* // src/components/StaticComposerPanel.jsx */
 import React from 'react';
-import { TRAIT_MANIFEST, LAYER_ORDER, UI_ORDER } from '@/data/traits';
+import { TRAIT_MANIFEST, UI_ORDER } from '@/data/traits';
+import { getDisplayOrder } from '@/lib/traitUtils';
 import { TraitSelector } from '@/components/TraitSelector';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Lock, Unlock } from 'lucide-react';
 import NftLoader from '@/components/NftLoader';
-import ActionPanel from './ActionPanel'; // Import the new component
+import ActionPanel from './ActionPanel';
+
 
 export function StaticComposerPanel({
   staticConfig,
@@ -20,6 +22,7 @@ export function StaticComposerPanel({
   onNftLoad,
   isNftLoading
 }) {
+    const displayOrder = getDisplayOrder(staticConfig);
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Left Panel: Controls */}
@@ -65,7 +68,8 @@ export function StaticComposerPanel({
       <div className="lg:col-span-2 flex flex-col gap-4">
         <div className="w-full aspect-square p-2 rounded-lg border bg-black/20">
           <div className="relative w-full h-full">
-            {LAYER_ORDER.map(layerKey => {
+            {/* Map over the dynamic displayOrder instead of the static LAYER_ORDER */}
+            {displayOrder.map(layerKey => {
               const optionKey = staticConfig[layerKey];
               if (!optionKey) return null;
               const url = TRAIT_MANIFEST[layerKey]?.options[optionKey];

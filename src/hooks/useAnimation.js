@@ -2,7 +2,8 @@
 import { useState, useCallback } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
 import GIF from 'gif.js';
-import { TRAIT_MANIFEST, LAYER_ORDER } from '@/data/traits';
+import { TRAIT_MANIFEST } from '@/data/traits';
+import { getDisplayOrder } from '@/lib/traitUtils';
 
 export function useAnimation(staticConfig) {
   const [frames, setFrames] = useState([]);
@@ -66,6 +67,7 @@ export function useAnimation(staticConfig) {
     canvas.width = CANVAS_SIZE;
     canvas.height = CANVAS_SIZE;
     for (const frame of frames) {
+      const displayOrder = getDisplayOrder(frame.config);
       const imagesToDraw = LAYER_ORDER.map(layer => {
         const url = TRAIT_MANIFEST[layer]?.options[frame.config[layer]];
         return url ? new Promise(resolve => {
