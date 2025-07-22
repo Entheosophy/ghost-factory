@@ -30,7 +30,7 @@ export default function ActionPanel({ randomizeMode, onModeChange, onRandomize, 
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] font-pixel" align="end">
             <DropdownMenuItem onClick={() => onDownload(1410)}>
-              Large (1410px) - HD
+              Large (1410px) - Original
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onDownload(512)}>
               Medium (512px) - Sticker
