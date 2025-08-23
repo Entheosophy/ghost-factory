@@ -133,6 +133,7 @@ const TRAIT_MANIFEST = {
             muscles_left_onesie_brown: 'traits/hand_left/muscles_left$onesie_brown%230.png',
             blade_scythe_white: 'traits/hand_left/blade_scythe$white%234.png',
             blade_battle_axe_goblin: 'traits/hand_left/blade_battle_axe$goblin%230.png',
+            flag: 'traits/hand_left/flag.png',
             guitar_electric_left_white: 'traits/hand_left/guitar_electric_left$white%2310.png',
             guitar_electric_left_gold: 'traits/hand_left/guitar_electric_left$gold%2310.png',
             drink_boba_tea_white: 'traits/hand_left/drink_boba_tea$white%234.png',
