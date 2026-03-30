@@ -24,17 +24,22 @@ const GIB_COLOR_PRESETS = [
 const DEFAULT_GIB_CONFIG = {
   background: 'none',
   head: 'none',
-  scale: 0,
-  offsetX: 0,
-  offsetY: 0,
+  gibScale: 0,
+  gibOffsetX: 0,
+  gibOffsetY: 0,
+  headScale: 0,
+  headOffsetX: 0,
+  headOffsetY: 0,
+  frameOffsetX: 0,
+  frameOffsetY: 0,
   padding: 100,
   color: '#ffffff',
 };
 
-function buildGibSvgMarkup({ scale, color }) {
+function buildGibSvgMarkup({ gibScale, color }) {
   const textX = 512 + BASE_GIB_PLACEMENT.offsetX;
   const textY = 600 + BASE_GIB_PLACEMENT.offsetY;
-  const fontSize = 196 * (BASE_GIB_PLACEMENT.scale + scale);
+  const fontSize = 196 * (BASE_GIB_PLACEMENT.scale + gibScale);
   const escapedFontStack = GIB_FONT_STACK.replace(/"/g, '&quot;');
 
   return `
@@ -106,13 +111,29 @@ function getSquareCrop(bounds, size, padding) {
   return { sourceX, sourceY, sourceSize };
 }
 
+function drawLayer(context, image, offsetX, offsetY, scaleDelta) {
+  if (!image) return;
+
+  const scale = 1 + scaleDelta;
+  const drawSize = PREVIEW_SIZE * scale;
+  const centeredX = (PREVIEW_SIZE - drawSize) / 2 + offsetX;
+  const centeredY = (PREVIEW_SIZE - drawSize) / 2 + offsetY;
+
+  context.drawImage(image, centeredX, centeredY, drawSize, drawSize);
+}
+
 async function renderCompositeSquare({
   backgroundImageUrl,
   gibSvgUrl,
   headImageUrl,
   padding,
-  offsetX,
-  offsetY,
+  gibOffsetX,
+  gibOffsetY,
+  headOffsetX,
+  headOffsetY,
+  headScale,
+  frameOffsetX,
+  frameOffsetY,
   outputSize = PREVIEW_SIZE,
 }) {
   const subjectCanvas = document.createElement('canvas');
@@ -128,13 +149,8 @@ async function renderCompositeSquare({
     headImageUrl ? loadImage(headImageUrl) : Promise.resolve(null),
   ]);
 
-  if (gibImage) {
-    subjectContext.drawImage(gibImage, 0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
-  }
-
-  if (headImage) {
-    subjectContext.drawImage(headImage, 0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
-  }
+  drawLayer(subjectContext, gibImage, gibOffsetX, gibOffsetY, 0);
+  drawLayer(subjectContext, headImage, headOffsetX, headOffsetY, headScale);
 
   const bounds = findOpaqueBounds(subjectContext, PREVIEW_SIZE);
   if (!bounds) return null;
@@ -160,8 +176,8 @@ async function renderCompositeSquare({
     sourceY,
     sourceSize,
     sourceSize,
-    centeredX + offsetX,
-    centeredY + offsetY,
+    centeredX + frameOffsetX,
+    centeredY + frameOffsetY,
     destinationSize,
     destinationSize,
   );
@@ -190,8 +206,13 @@ export function GibComposerPanel() {
       gibSvgUrl,
       headImageUrl,
       padding: config.padding,
-      offsetX: config.offsetX,
-      offsetY: config.offsetY,
+      gibOffsetX: config.gibOffsetX,
+      gibOffsetY: config.gibOffsetY,
+      headOffsetX: config.headOffsetX,
+      headOffsetY: config.headOffsetY,
+      headScale: config.headScale,
+      frameOffsetX: config.frameOffsetX,
+      frameOffsetY: config.frameOffsetY,
       outputSize: PREVIEW_SIZE,
     }).then((dataUrl) => {
       if (isActive) {
@@ -202,7 +223,19 @@ export function GibComposerPanel() {
     return () => {
       isActive = false;
     };
-  }, [backgroundImageUrl, config.offsetX, config.offsetY, config.padding, gibSvgUrl, headImageUrl]);
+  }, [
+    backgroundImageUrl,
+    config.frameOffsetX,
+    config.frameOffsetY,
+    config.gibOffsetX,
+    config.gibOffsetY,
+    config.headOffsetX,
+    config.headOffsetY,
+    config.headScale,
+    config.padding,
+    gibSvgUrl,
+    headImageUrl,
+  ]);
 
   const updateConfig = useCallback((key, value) => {
     setConfig((currentConfig) => ({ ...currentConfig, [key]: value }));
@@ -226,8 +259,13 @@ export function GibComposerPanel() {
       gibSvgUrl,
       headImageUrl,
       padding: config.padding,
-      offsetX: config.offsetX,
-      offsetY: config.offsetY,
+      gibOffsetX: config.gibOffsetX,
+      gibOffsetY: config.gibOffsetY,
+      headOffsetX: config.headOffsetX,
+      headOffsetY: config.headOffsetY,
+      headScale: config.headScale,
+      frameOffsetX: config.frameOffsetX,
+      frameOffsetY: config.frameOffsetY,
       outputSize: PREVIEW_SIZE,
     });
 
@@ -237,7 +275,20 @@ export function GibComposerPanel() {
     link.download = `gib-${config.head || 'none'}.png`;
     link.href = exportUrl;
     link.click();
-  }, [backgroundImageUrl, config.head, config.offsetX, config.offsetY, config.padding, gibSvgUrl, headImageUrl]);
+  }, [
+    backgroundImageUrl,
+    config.frameOffsetX,
+    config.frameOffsetY,
+    config.gibOffsetX,
+    config.gibOffsetY,
+    config.head,
+    config.headOffsetX,
+    config.headOffsetY,
+    config.headScale,
+    config.padding,
+    gibSvgUrl,
+    headImageUrl,
+  ]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -289,43 +340,113 @@ export function GibComposerPanel() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <Label>Scale</Label>
-              <span className="text-muted-foreground">{config.scale >= 0 ? '+' : ''}{config.scale.toFixed(2)}x</span>
+              <Label>Gib Scale</Label>
+              <span className="text-muted-foreground">{config.gibScale >= 0 ? '+' : ''}{config.gibScale.toFixed(2)}x</span>
             </div>
             <Slider
-              value={[config.scale]}
+              value={[config.gibScale]}
               min={-0.18}
               max={0.7}
               step={0.01}
-              onValueChange={([value]) => updateConfig('scale', value)}
+              onValueChange={([value]) => updateConfig('gibScale', value)}
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <Label>Horizontal</Label>
-              <span className="text-muted-foreground">{config.offsetX >= 0 ? '+' : ''}{config.offsetX}px</span>
+              <Label>Gib X</Label>
+              <span className="text-muted-foreground">{config.gibOffsetX >= 0 ? '+' : ''}{config.gibOffsetX}px</span>
             </div>
             <Slider
-              value={[config.offsetX]}
+              value={[config.gibOffsetX]}
               min={-160}
               max={160}
               step={1}
-              onValueChange={([value]) => updateConfig('offsetX', value)}
+              onValueChange={([value]) => updateConfig('gibOffsetX', value)}
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <Label>Vertical</Label>
-              <span className="text-muted-foreground">{config.offsetY >= 0 ? '+' : ''}{config.offsetY}px</span>
+              <Label>Gib Y</Label>
+              <span className="text-muted-foreground">{config.gibOffsetY >= 0 ? '+' : ''}{config.gibOffsetY}px</span>
             </div>
             <Slider
-              value={[config.offsetY]}
+              value={[config.gibOffsetY]}
               min={-160}
               max={160}
               step={1}
-              onValueChange={([value]) => updateConfig('offsetY', value)}
+              onValueChange={([value]) => updateConfig('gibOffsetY', value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <Label>Head Scale</Label>
+              <span className="text-muted-foreground">{config.headScale >= 0 ? '+' : ''}{config.headScale.toFixed(2)}x</span>
+            </div>
+            <Slider
+              value={[config.headScale]}
+              min={-0.35}
+              max={0.35}
+              step={0.01}
+              onValueChange={([value]) => updateConfig('headScale', value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <Label>Head X</Label>
+              <span className="text-muted-foreground">{config.headOffsetX >= 0 ? '+' : ''}{config.headOffsetX}px</span>
+            </div>
+            <Slider
+              value={[config.headOffsetX]}
+              min={-160}
+              max={160}
+              step={1}
+              onValueChange={([value]) => updateConfig('headOffsetX', value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <Label>Head Y</Label>
+              <span className="text-muted-foreground">{config.headOffsetY >= 0 ? '+' : ''}{config.headOffsetY}px</span>
+            </div>
+            <Slider
+              value={[config.headOffsetY]}
+              min={-160}
+              max={160}
+              step={1}
+              onValueChange={([value]) => updateConfig('headOffsetY', value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <Label>Frame X</Label>
+              <span className="text-muted-foreground">{config.frameOffsetX >= 0 ? '+' : ''}{config.frameOffsetX}px</span>
+            </div>
+            <Slider
+              value={[config.frameOffsetX]}
+              min={-160}
+              max={160}
+              step={1}
+              onValueChange={([value]) => updateConfig('frameOffsetX', value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <Label>Frame Y</Label>
+              <span className="text-muted-foreground">{config.frameOffsetY >= 0 ? '+' : ''}{config.frameOffsetY}px</span>
+            </div>
+            <Slider
+              value={[config.frameOffsetY]}
+              min={-160}
+              max={160}
+              step={1}
+              onValueChange={([value]) => updateConfig('frameOffsetY', value)}
             />
           </div>
 
