@@ -9,7 +9,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 
 // Utilities and helpers
 import { getTraitColor, TRAIT_COLOR_MAP } from '@/lib/traitUtils';
-import { cn } from '@/lib/utils';
 
 
 // This map is used by ColorizedTraitName

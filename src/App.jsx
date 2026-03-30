@@ -1,10 +1,11 @@
 /* // src/App.jsx */
 import { useState } from 'react';
-import { DndContext, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
+import { PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useGhostConfig } from './hooks/useGhostConfig';
 import { useAnimation } from './hooks/useAnimation';
 import { StaticComposerPanel } from '@/components/StaticComposerPanel';
 import { AnimationStudioPanel } from '@/components/AnimationStudioPanel';
+import { GibComposerPanel } from '@/components/GibComposerPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TRAIT_MANIFEST, COHESIVE_THEMES } from './data/traits';
 
@@ -74,9 +75,10 @@ function App() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-4 text-foreground font-pixel overflow-x-hidden">
       <Tabs defaultValue="composer" onValueChange={setActiveTab} className="w-full max-w-7xl mx-auto flex flex-col gap-4">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 gap-2">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2">
           <TabsTrigger value="composer">Static Composer</TabsTrigger>
           <TabsTrigger value="animator">Animation Studio</TabsTrigger>
+          <TabsTrigger value="gib">gib Lab</TabsTrigger>
         </TabsList>
         <TabsContent value="composer">
           <StaticComposerPanel {...ghostConfig} onNftLoad={handleLoadNft} isNftLoading={isNftLoading} />
@@ -108,6 +110,9 @@ function App() {
             onNftLoad={handleLoadNft}
             isNftLoading={isNftLoading}
           />
+        </TabsContent>
+        <TabsContent value="gib">
+          <GibComposerPanel />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,13 +1,16 @@
-// vite.config.js
+// /Users/entheos/Documents/Ghost-Factory/vite.config.js
 import path from "path";
+import { fileURLToPath } from "url";
 import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite"; // Ensure this import is present
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(), // This line is the critical fix
+    tailwindcss(),
   ],
   resolve: {
     alias: {
