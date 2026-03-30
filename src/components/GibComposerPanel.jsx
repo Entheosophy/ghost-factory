@@ -192,6 +192,25 @@ function getTrimCrop(bounds, size, padding) {
   return { sourceX, sourceY, sourceWidth, sourceHeight };
 }
 
+function mapBoundsToOutput({
+  bounds,
+  sourceX,
+  sourceY,
+  sourceSize,
+  destinationX,
+  destinationY,
+  destinationSize,
+}) {
+  const scale = destinationSize / sourceSize;
+
+  return {
+    minX: (bounds.minX - sourceX) * scale + destinationX,
+    minY: (bounds.minY - sourceY) * scale + destinationY,
+    maxX: (bounds.maxX - sourceX) * scale + destinationX,
+    maxY: (bounds.maxY - sourceY) * scale + destinationY,
+  };
+}
+
 function drawLayer(context, image, offsetX, offsetY, scaleDelta) {
   if (!image) return;
 
@@ -273,6 +292,8 @@ async function renderCompositeTrim({
   headOffsetX,
   headOffsetY,
   headScale,
+  frameOffsetX,
+  frameOffsetY,
 }) {
   const subjectCanvas = document.createElement('canvas');
   const subjectContext = subjectCanvas.getContext('2d', { willReadFrequently: true });
@@ -293,32 +314,50 @@ async function renderCompositeTrim({
   const bounds = findOpaqueBounds(subjectContext, PREVIEW_SIZE);
   if (!bounds) return null;
 
-  const { sourceX, sourceY, sourceWidth, sourceHeight } = getTrimCrop(bounds, PREVIEW_SIZE, padding);
+  const { sourceX, sourceY, sourceSize } = getSquareCrop(bounds, PREVIEW_SIZE, padding);
+  const squareCanvas = document.createElement('canvas');
+  const squareContext = squareCanvas.getContext('2d');
+
+  squareCanvas.width = PREVIEW_SIZE;
+  squareCanvas.height = PREVIEW_SIZE;
+  squareContext.clearRect(0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
+
+  if (backgroundImage) {
+    squareContext.drawImage(backgroundImage, 0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
+  }
+
+  squareContext.drawImage(
+    subjectCanvas,
+    sourceX,
+    sourceY,
+    sourceSize,
+    sourceSize,
+    frameOffsetX,
+    frameOffsetY,
+    PREVIEW_SIZE,
+    PREVIEW_SIZE,
+  );
+
+  const squareBounds = mapBoundsToOutput({
+    bounds,
+    sourceX,
+    sourceY,
+    sourceSize,
+    destinationX: frameOffsetX,
+    destinationY: frameOffsetY,
+    destinationSize: PREVIEW_SIZE,
+  });
+  const { sourceX: trimX, sourceY: trimY, sourceWidth, sourceHeight } = getTrimCrop(squareBounds, PREVIEW_SIZE, padding);
   const outputCanvas = document.createElement('canvas');
   const outputContext = outputCanvas.getContext('2d');
 
   outputCanvas.width = sourceWidth;
   outputCanvas.height = sourceHeight;
   outputContext.clearRect(0, 0, sourceWidth, sourceHeight);
-
-  if (backgroundImage) {
-    outputContext.drawImage(
-      backgroundImage,
-      sourceX,
-      sourceY,
-      sourceWidth,
-      sourceHeight,
-      0,
-      0,
-      sourceWidth,
-      sourceHeight,
-    );
-  }
-
   outputContext.drawImage(
-    subjectCanvas,
-    sourceX,
-    sourceY,
+    squareCanvas,
+    trimX,
+    trimY,
     sourceWidth,
     sourceHeight,
     0,
@@ -464,6 +503,8 @@ export function GibComposerPanel() {
       headOffsetX: config.headOffsetX,
       headOffsetY: config.headOffsetY,
       headScale: config.headScale,
+      frameOffsetX: config.frameOffsetX,
+      frameOffsetY: config.frameOffsetY,
     });
 
     if (!exportUrl) return;
@@ -480,6 +521,8 @@ export function GibComposerPanel() {
     config.headOffsetX,
     config.headOffsetY,
     config.headScale,
+    config.frameOffsetX,
+    config.frameOffsetY,
     config.padding,
     gibSvgUrl,
     headImageUrl,
@@ -498,7 +541,7 @@ export function GibComposerPanel() {
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="space-y-2">
-            <Label>Gib Variant</Label>
+            <Label>gib Variant</Label>
             <Select value={config.variant} onValueChange={handleVariantChange}>
               <SelectTrigger className="text-center">
                 <SelectValue placeholder="Select gib variant">
@@ -534,7 +577,7 @@ export function GibComposerPanel() {
 
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <Label>Gib Color</Label>
+              <Label>gib Color</Label>
               <span className="text-muted-foreground uppercase">{config.color}</span>
             </div>
             <div className="grid grid-cols-3 gap-2">
@@ -561,7 +604,7 @@ export function GibComposerPanel() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <Label>Gib Scale</Label>
+              <Label>gib Scale</Label>
               <span className="text-muted-foreground">{config.gibScale >= 0 ? '+' : ''}{config.gibScale.toFixed(2)}x</span>
             </div>
             <Slider
@@ -575,7 +618,7 @@ export function GibComposerPanel() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <Label>Gib X</Label>
+              <Label>gib X</Label>
               <span className="text-muted-foreground">{config.gibOffsetX >= 0 ? '+' : ''}{config.gibOffsetX}px</span>
             </div>
             <Slider
@@ -589,7 +632,7 @@ export function GibComposerPanel() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <Label>Gib Y</Label>
+              <Label>gib Y</Label>
               <span className="text-muted-foreground">{config.gibOffsetY >= 0 ? '+' : ''}{config.gibOffsetY}px</span>
             </div>
             <Slider
@@ -692,8 +735,8 @@ export function GibComposerPanel() {
             <Button onClick={handleDownloadSquare} variant="holographic" className="w-full whitespace-nowrap">
               Square PNG
             </Button>
-            <Button onClick={handleDownloadTrim} variant="outline" className="w-full whitespace-nowrap">
-              Trim PNG
+            <Button onClick={handleDownloadTrim} variant="holographic" className="w-full whitespace-nowrap">
+              Trimmed PNG
             </Button>
           </div>
         </CardContent>
