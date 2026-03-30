@@ -115,10 +115,14 @@ function buildGibSvgMarkup({ variant, gibScale, color }) {
         font-size='${fontSize}'
         font-weight='700'
         fill='${color}'
-        letter-spacing='0'
+        letter-spacing='-6'
       >${activeVariant.text}</text>
     </svg>
   `.trim();
+}
+
+function getGibVariantText(variantKey) {
+  return (GIB_VARIANTS.find((entry) => entry.key === variantKey) || GIB_VARIANTS[0]).text;
 }
 
 function loadImage(src) {
@@ -486,21 +490,29 @@ export function GibComposerPanel() {
       <Card className="lg:col-span-1 bg-card/80">
         <CardHeader>
           <CardTitle className="text-2xl tracking-widest text-center">GIB LAB</CardTitle>
-          <CardDescription className="text-center font-gib">
-            {(GIB_VARIANTS.find((entry) => entry.key === config.variant) || GIB_VARIANTS[0]).text}
+          <CardDescription className="text-center">
+            <span className="font-gib inline-block whitespace-pre text-lg leading-none">
+              {getGibVariantText(config.variant)}
+            </span>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="space-y-2">
             <Label>Gib Variant</Label>
             <Select value={config.variant} onValueChange={handleVariantChange}>
-              <SelectTrigger className="font-gib text-center">
-                <SelectValue placeholder="Select gib variant" />
+              <SelectTrigger className="text-center">
+                <SelectValue placeholder="Select gib variant">
+                  <span className="font-gib mx-auto inline-block whitespace-pre text-base leading-none">
+                    {getGibVariantText(config.variant)}
+                  </span>
+                </SelectValue>
               </SelectTrigger>
-              <SelectContent className="font-gib">
+              <SelectContent>
                 {GIB_VARIANTS.map((variant) => (
-                  <SelectItem key={variant.key} value={variant.key} className="justify-center pr-2 pl-2 text-center">
-                    {variant.text}
+                  <SelectItem key={variant.key} value={variant.key} className="justify-center px-2 text-center">
+                    <span className="font-gib inline-block whitespace-pre text-base leading-none">
+                      {variant.text}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
