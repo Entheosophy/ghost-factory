@@ -1,4 +1,5 @@
 /* src/index.css */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
 @import "tailwindcss";
 
 /* STEP A: Register your CSS variables with Tailwind's theme engine.
@@ -154,4 +155,8 @@
 /* This rule bypasses the build process issue and ensures the font class is always available. */
 .font-pixel {
   font-family: "Press Start 2P", monospace;
+}
+
+.font-gib {
+  font-family: "Roboto", "Noto Sans Tibetan", "Noto Sans Symbols 2", "Segoe UI Symbol", "Apple Symbols", "Arial Unicode MS", sans-serif;
 }

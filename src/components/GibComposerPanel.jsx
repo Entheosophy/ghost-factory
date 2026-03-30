@@ -7,9 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const GIB_TEXT = '༼ つ ◕_◕ ༽つ';
-const GIB_FONT_STACK = '"Noto Sans Tibetan", "Noto Sans Symbols 2", "Segoe UI Symbol", "Apple Symbols", "Arial Unicode MS", sans-serif';
+const GIB_FONT_STACK = '"Roboto", "Noto Sans Tibetan", "Noto Sans Symbols 2", "Segoe UI Symbol", "Apple Symbols", "Arial Unicode MS", sans-serif';
 const PREVIEW_SIZE = 1024;
 const BASE_GIB_PLACEMENT = {
   offsetX: 79,
@@ -20,8 +20,40 @@ const GIB_COLOR_PRESETS = [
   { label: 'White', value: '#ffffff' },
   { label: 'Black', value: '#000000' },
 ];
+const GIB_VARIANTS = [
+  { key: 'base', text: '༼ つ ◕_◕ ༽つ' },
+  { key: 'shades', text: '༼ つ⌐■_■༽つ' },
+  { key: 'flip_table', text: '༼ノ*◕_◕ ༽ノ彡┻━┻', preset: { gibScale: -0.12 } },
+  { key: 'rage_flip', text: '༼┛✧Д✧ ༽┛彡┻━┻', preset: { gibScale: -0.14 } },
+  { key: 'stare', text: '༼ つ ಠ_ಠ ༽つ' },
+  { key: 'gun', text: '༼ つ -_◕༽︻デ═一', preset: { gibScale: -0.16, gibOffsetX: -14 } },
+  { key: 'cry', text: 'ヽ༼ ಥ_ಥ ༽ﾉ' },
+  { key: 'sad', text: '༼ つ ˃̣̣̥o ˂̣̣̥ ༽つ', preset: { gibScale: -0.04 } },
+  { key: 'toxic', text: '༼ つ☢益☢༽つ' },
+  { key: 'shrug', text: "¯\\༼ ' ◕_◕ ༽/¯", preset: { gibScale: -0.08 } },
+  { key: 'angry', text: '༼ つꐦ○_○༽つ' },
+  { key: 'arms_up', text: "༼ ง '◕_◕ ༽ว" },
+  { key: 'coffee', text: '༼ つ ◕_◕ ༽c旦', preset: { gibScale: -0.02 } },
+  { key: 'salute', text: '༼ ◕_◕ ゞ༽' },
+  { key: 'sleepy', text: '༼⸝⸝ᴗ﹏ᴗ⸝⸝༽ ᶻ 𝗓 𐰁', preset: { gibScale: -0.18 } },
+  { key: 'cute', text: '༼ つ •⤙• ༽つ' },
+  { key: 'buff', text: "ᕙ༼ '◕益◕‶ ༽ᕗ", preset: { gibScale: -0.1 } },
+  { key: 'flex', text: "༼ * '◡̀_◡́ ༽ᕤ", preset: { gibScale: -0.08 } },
+  { key: 'dotti', text: 'ദ്ദി༼ ˵ ◕_◕ ˵ ༽', preset: { gibScale: -0.08 } },
+  { key: 'signal', text: '—_-༼ つ ◕_◕ ༽つ', preset: { gibScale: -0.08, gibOffsetX: 12 } },
+  { key: 'wide_eyes', text: '༼ つ ⚆_⚆ ༽つ' },
+  { key: 'skeptical', text: '༼ つ ¬_¬ ༽つ' },
+  { key: 'worried', text: '∠༼ つ ◕﹏◕ ༽つ', preset: { gibScale: -0.06 } },
+  { key: 'happy', text: '༼ つ ^o^ ༽つ' },
+  { key: 'starry', text: '༼ つ★‿★ ༽つ' },
+  { key: 'wink', text: '༼ つ −‿◕ ༽つ' },
+  { key: 'spell', text: '༼ つ ◕_◕༽つ━☆ﾟ.*･｡ﾟ', preset: { gibScale: -0.16, gibOffsetX: -18 } },
+  { key: 'alchemy', text: '.🜲 ༼ つ •⤙• ༽つ', preset: { gibScale: -0.08, gibOffsetX: 8 } },
+];
+const DEFAULT_VARIANT_KEY = 'base';
 
 const DEFAULT_GIB_CONFIG = {
+  variant: DEFAULT_VARIANT_KEY,
   background: 'none',
   head: 'none',
   gibScale: 0,
@@ -32,11 +64,12 @@ const DEFAULT_GIB_CONFIG = {
   headOffsetY: 0,
   frameOffsetX: 0,
   frameOffsetY: 0,
-  padding: 100,
+  padding: 24,
   color: '#ffffff',
 };
 
-function buildGibSvgMarkup({ gibScale, color }) {
+function buildGibSvgMarkup({ variant, gibScale, color }) {
+  const activeVariant = GIB_VARIANTS.find((entry) => entry.key === variant) || GIB_VARIANTS[0];
   const textX = 512 + BASE_GIB_PLACEMENT.offsetX;
   const textY = 600 + BASE_GIB_PLACEMENT.offsetY;
   const fontSize = 196 * (BASE_GIB_PLACEMENT.scale + gibScale);
@@ -54,7 +87,7 @@ function buildGibSvgMarkup({ gibScale, color }) {
         font-weight='700'
         fill='${color}'
         letter-spacing='0'
-      >${GIB_TEXT}</text>
+      >${activeVariant.text}</text>
     </svg>
   `.trim();
 }
@@ -111,6 +144,21 @@ function getSquareCrop(bounds, size, padding) {
   return { sourceX, sourceY, sourceSize };
 }
 
+function getTrimCrop(bounds, size, padding) {
+  const width = bounds.maxX - bounds.minX + 1;
+  const height = bounds.maxY - bounds.minY + 1;
+  const sourceWidth = Math.min(size, width + padding * 2);
+  const sourceHeight = Math.min(size, height + padding * 2);
+
+  let sourceX = Math.round(bounds.minX - padding);
+  let sourceY = Math.round(bounds.minY - padding);
+
+  sourceX = Math.max(0, Math.min(sourceX, size - sourceWidth));
+  sourceY = Math.max(0, Math.min(sourceY, size - sourceHeight));
+
+  return { sourceX, sourceY, sourceWidth, sourceHeight };
+}
+
 function drawLayer(context, image, offsetX, offsetY, scaleDelta) {
   if (!image) return;
 
@@ -158,9 +206,6 @@ async function renderCompositeSquare({
   const { sourceX, sourceY, sourceSize } = getSquareCrop(bounds, PREVIEW_SIZE, padding);
   const outputCanvas = document.createElement('canvas');
   const outputContext = outputCanvas.getContext('2d');
-  const destinationSize = Math.max(1, outputSize - padding * 2);
-  const centeredX = (outputSize - destinationSize) / 2;
-  const centeredY = (outputSize - destinationSize) / 2;
 
   outputCanvas.width = outputSize;
   outputCanvas.height = outputSize;
@@ -176,10 +221,77 @@ async function renderCompositeSquare({
     sourceY,
     sourceSize,
     sourceSize,
-    centeredX + frameOffsetX,
-    centeredY + frameOffsetY,
-    destinationSize,
-    destinationSize,
+    frameOffsetX,
+    frameOffsetY,
+    outputSize,
+    outputSize,
+  );
+
+  return outputCanvas.toDataURL('image/png');
+}
+
+async function renderCompositeTrim({
+  backgroundImageUrl,
+  gibSvgUrl,
+  headImageUrl,
+  padding,
+  gibOffsetX,
+  gibOffsetY,
+  headOffsetX,
+  headOffsetY,
+  headScale,
+}) {
+  const subjectCanvas = document.createElement('canvas');
+  const subjectContext = subjectCanvas.getContext('2d', { willReadFrequently: true });
+
+  subjectCanvas.width = PREVIEW_SIZE;
+  subjectCanvas.height = PREVIEW_SIZE;
+  subjectContext.clearRect(0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
+
+  const [backgroundImage, gibImage, headImage] = await Promise.all([
+    backgroundImageUrl ? loadImage(backgroundImageUrl) : Promise.resolve(null),
+    loadImage(gibSvgUrl),
+    headImageUrl ? loadImage(headImageUrl) : Promise.resolve(null),
+  ]);
+
+  drawLayer(subjectContext, gibImage, gibOffsetX, gibOffsetY, 0);
+  drawLayer(subjectContext, headImage, headOffsetX, headOffsetY, headScale);
+
+  const bounds = findOpaqueBounds(subjectContext, PREVIEW_SIZE);
+  if (!bounds) return null;
+
+  const { sourceX, sourceY, sourceWidth, sourceHeight } = getTrimCrop(bounds, PREVIEW_SIZE, padding);
+  const outputCanvas = document.createElement('canvas');
+  const outputContext = outputCanvas.getContext('2d');
+
+  outputCanvas.width = sourceWidth;
+  outputCanvas.height = sourceHeight;
+  outputContext.clearRect(0, 0, sourceWidth, sourceHeight);
+
+  if (backgroundImage) {
+    outputContext.drawImage(
+      backgroundImage,
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
+      0,
+      0,
+      sourceWidth,
+      sourceHeight,
+    );
+  }
+
+  outputContext.drawImage(
+    subjectCanvas,
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    0,
+    0,
+    sourceWidth,
+    sourceHeight,
   );
 
   return outputCanvas.toDataURL('image/png');
@@ -249,11 +361,29 @@ export function GibComposerPanel() {
     updateConfig('color', event.target.value);
   }, [updateConfig]);
 
+  const handleVariantChange = useCallback((variantKey) => {
+    const selectedVariant = GIB_VARIANTS.find((entry) => entry.key === variantKey);
+    const preset = selectedVariant?.preset || {};
+
+    setConfig((currentConfig) => ({
+      ...currentConfig,
+      variant: variantKey,
+      gibScale: preset.gibScale ?? 0,
+      gibOffsetX: preset.gibOffsetX ?? 0,
+      gibOffsetY: preset.gibOffsetY ?? 0,
+      headScale: preset.headScale ?? 0,
+      headOffsetX: preset.headOffsetX ?? 0,
+      headOffsetY: preset.headOffsetY ?? 0,
+      frameOffsetX: 0,
+      frameOffsetY: 0,
+    }));
+  }, []);
+
   const handleReset = useCallback(() => {
     setConfig(DEFAULT_GIB_CONFIG);
   }, []);
 
-  const handleDownload = useCallback(async () => {
+  const handleDownloadSquare = useCallback(async () => {
     const exportUrl = await renderCompositeSquare({
       backgroundImageUrl,
       gibSvgUrl,
@@ -272,7 +402,7 @@ export function GibComposerPanel() {
     if (!exportUrl) return;
 
     const link = document.createElement('a');
-    link.download = `gib-${config.head || 'none'}.png`;
+    link.download = `gib-${config.head || 'none'}-square.png`;
     link.href = exportUrl;
     link.click();
   }, [
@@ -290,14 +420,64 @@ export function GibComposerPanel() {
     headImageUrl,
   ]);
 
+  const handleDownloadTrim = useCallback(async () => {
+    const exportUrl = await renderCompositeTrim({
+      backgroundImageUrl,
+      gibSvgUrl,
+      headImageUrl,
+      padding: config.padding,
+      gibOffsetX: config.gibOffsetX,
+      gibOffsetY: config.gibOffsetY,
+      headOffsetX: config.headOffsetX,
+      headOffsetY: config.headOffsetY,
+      headScale: config.headScale,
+    });
+
+    if (!exportUrl) return;
+
+    const link = document.createElement('a');
+    link.download = `gib-${config.head || 'none'}-trim.png`;
+    link.href = exportUrl;
+    link.click();
+  }, [
+    backgroundImageUrl,
+    config.gibOffsetX,
+    config.gibOffsetY,
+    config.head,
+    config.headOffsetX,
+    config.headOffsetY,
+    config.headScale,
+    config.padding,
+    gibSvgUrl,
+    headImageUrl,
+  ]);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <Card className="lg:col-span-1 bg-card/80">
         <CardHeader>
           <CardTitle className="text-2xl tracking-widest text-center">GIB LAB</CardTitle>
-          <CardDescription className="text-center">༼ つ ◕_◕ ༽つ.</CardDescription>
+          <CardDescription className="text-center font-gib">
+            {(GIB_VARIANTS.find((entry) => entry.key === config.variant) || GIB_VARIANTS[0]).text}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <Label>Gib Variant</Label>
+            <Select value={config.variant} onValueChange={handleVariantChange}>
+              <SelectTrigger className="font-gib text-center">
+                <SelectValue placeholder="Select gib variant" />
+              </SelectTrigger>
+              <SelectContent className="font-gib">
+                {GIB_VARIANTS.map((variant) => (
+                  <SelectItem key={variant.key} value={variant.key} className="justify-center pr-2 pl-2 text-center">
+                    {variant.text}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <TraitSelector
             layer="background"
             trait={TRAIT_MANIFEST.background}
@@ -452,24 +632,27 @@ export function GibComposerPanel() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <Label>Crop Padding</Label>
+              <Label>Edge Margin</Label>
               <span className="text-muted-foreground">{config.padding}px</span>
             </div>
             <Slider
               value={[config.padding]}
               min={0}
-              max={240}
+              max={96}
               step={1}
               onValueChange={([value]) => updateConfig('padding', value)}
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button onClick={handleReset} variant="outline">
+          <div className="flex flex-col gap-3">
+            <Button onClick={handleReset} variant="outline" className="w-full whitespace-nowrap">
               Reset
             </Button>
-            <Button onClick={handleDownload} variant="holographic">
-              Download
+            <Button onClick={handleDownloadSquare} variant="holographic" className="w-full whitespace-nowrap">
+              Square PNG
+            </Button>
+            <Button onClick={handleDownloadTrim} variant="outline" className="w-full whitespace-nowrap">
+              Trim PNG
             </Button>
           </div>
         </CardContent>
