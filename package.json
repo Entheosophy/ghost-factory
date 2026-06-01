@@ -1,13 +1,35 @@
 {
   "name": "ghost-factory",
-  "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Open-source layered trait composer for creators building character art, avatars, stickers, animations, and reusable PFP-style image stacks.",
+  "license": "MIT",
   "type": "module",
+  "homepage": "https://ghost-factory.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Entheosophy/ghost-factory.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Entheosophy/ghost-factory/issues"
+  },
+  "keywords": [
+    "avatar-builder",
+    "character-creator",
+    "generative-art",
+    "image-stacking",
+    "nft-builder",
+    "pfp",
+    "react",
+    "trait-composer",
+    "vite"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "check": "npm run validate:traits && npm run lint && npm run build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "validate:traits": "node scripts/validateTraitManifest.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

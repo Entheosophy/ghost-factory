@@ -1,4 +1,4 @@
-/* // src/components/StaticComposerPanel.jsx */
+// /Users/entheos/Documents/Ghost-Factory/src/components/StaticComposerPanel.jsx
 import React from 'react';
 import { TRAIT_MANIFEST, UI_ORDER } from '@/data/traits';
 import { getDisplayOrder } from '@/lib/traitUtils';
@@ -18,6 +18,7 @@ export function StaticComposerPanel({
   onToggleLock,
   onRandomize,
   onDownload,
+  onDownloadConfig,
   onModeChange,
   onNftLoad,
   isNftLoading
@@ -85,6 +86,7 @@ export function StaticComposerPanel({
           onModeChange={onModeChange}
           onRandomize={onRandomize}
           onDownload={onDownload}
+          onDownloadConfig={onDownloadConfig}
         />
       </div>
     </div>

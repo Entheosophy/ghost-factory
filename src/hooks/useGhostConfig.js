@@ -1,7 +1,8 @@
-/* // src/hooks/useGhostConfig.js */
+// /Users/entheos/Documents/Ghost-Factory/src/hooks/useGhostConfig.js
 import { useState, useEffect, useCallback } from 'react';
 import { TRAIT_MANIFEST, COHESIVE_THEMES } from '@/data/traits';
 import { getDisplayOrder, LAYER_ORDER } from '@/lib/traitUtils'; 
+import { createGhostFactoryTemplateConfig } from '@/lib/templateConfig';
 
 export function useGhostConfig() {
   const [staticConfig, setStaticConfig] = useState({});
@@ -195,6 +196,21 @@ export function useGhostConfig() {
     });
   }, [staticConfig]);
 
+  const handleDownloadConfig = useCallback(() => {
+    const config = createGhostFactoryTemplateConfig({
+      traitManifest: TRAIT_MANIFEST,
+      layerOrder: LAYER_ORDER,
+    });
+    const blob = new Blob([`${JSON.stringify(config, null, 2)}\n`], {
+      type: 'application/json',
+    });
+    const link = document.createElement('a');
+    link.download = 'ghost-factory-trait-pack.config.json';
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }, []);
+
   useEffect(() => {
     if (staticConfig.skin === 'translucent_muscles') {
       const updates = {};
@@ -223,5 +239,6 @@ export function useGhostConfig() {
     onTraitSelect: handleSelectStaticTrait,
     onRandomize: handleRandomizeClick,
     onDownload: handleDownload,
+    onDownloadConfig: handleDownloadConfig,
   };
 }

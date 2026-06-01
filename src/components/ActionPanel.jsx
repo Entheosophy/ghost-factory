@@ -1,4 +1,4 @@
-/* // src/components/ActionPanel.jsx */
+// /Users/entheos/Documents/Ghost-Factory/src/components/ActionPanel.jsx
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from "@/components/ui/switch";
@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export default function ActionPanel({ randomizeMode, onModeChange, onRandomize, onDownload }) {
+export default function ActionPanel({ randomizeMode, onModeChange, onRandomize, onDownload, onDownloadConfig }) {
   return (
     <div className="flex flex-col gap-4 p-4 border rounded-lg bg-black/20">
       <div className="flex items-center justify-center space-x-2">
@@ -22,7 +22,7 @@ export default function ActionPanel({ randomizeMode, onModeChange, onRandomize, 
         />
         <Label htmlFor="randomize-mode">Semi-Cohesive</Label>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Button onClick={onRandomize} variant="holographic" className="w-full text-lg">Randomize</Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -40,6 +40,7 @@ export default function ActionPanel({ randomizeMode, onModeChange, onRandomize, 
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <Button onClick={onDownloadConfig} variant="outline" className="w-full text-lg">Export Config</Button>
       </div>
     </div>
   );
