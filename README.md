@@ -37,6 +37,8 @@ Ghost Factory gives creators a working reference implementation instead of a bla
 
 ## Quick Start
 
+Requires Node.js `20.19+`.
+
 ```bash
 npm install
 npm run dev
